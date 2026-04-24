@@ -154,7 +154,9 @@ var FOODS_CACHE_KEY = 'foods_v2';
 var FOODS_CACHE_TTL = 86400000;
 var SHOW_ZOOM       = 10;
 
-var TABELOG_CATS = ['うどん','うなぎ','お好み焼き','すき焼き・しゃぶしゃぶ','そば','とんかつ','アイス・ジェラート','アジア・エスニック','イタリアン','カフェ','カレー','スイーツ','ステーキ','スペイン料理','ハンバーガー','バー','パン','ピザ','フレンチ','ラーメン','中華料理','創作料理・イノベーティブ','和菓子','喫茶店','天ぷら','寿司','居酒屋','日本料理','洋食','焼き鳥','焼肉','立ち飲み','食堂','餃子','鳥料理'];
+var TABE_MAIN   = ['うどん','うなぎ','お好み焼き','すき焼き・しゃぶしゃぶ','そば','とんかつ','アジア・エスニック','イタリアン','カフェ','カレー','ステーキ','スペイン料理','ハンバーガー','パン','ピザ','フレンチ','ラーメン','中華料理','創作料理・イノベーティブ','天ぷら','寿司','居酒屋','日本料理','洋食','焼き鳥','焼肉','立ち飲み','食堂','餃子','鳥料理'];
+var TABE_SWEETS = ['アイス・ジェラート','スイーツ','バー','和菓子','喫茶店'];
+var TABELOG_CATS = TABE_MAIN.concat(TABE_SWEETS);
 var TABE_LABELS  = {'すき焼き・しゃぶしゃぶ':'すき・しゃぶ','アイス・ジェラート':'アイス','アジア・エスニック':'アジア系','創作料理・イノベーティブ':'イノベ'};
 var GOEI_GENRES  = ['フレンチ','イタリアン','日本料理','寿司','イノベーティブ','中華','スペイン料理','天ぷら・とんかつ','アジア料理','その他洋食','居酒屋・焼鳥・焼肉','和菓子・スイーツ','カフェ・パン・バー','その他'];
 var MICH_AWARDS  = ['ミシュラン 三つ星','ミシュラン 二つ星','ミシュラン 一つ星','ビブグルマン'];
@@ -190,7 +192,14 @@ var fState = {
 // ===== FILTERS =====
 function buildFilters() {
   var tg=document.getElementById('tabe-grid');
-  TABELOG_CATS.forEach(function(cat){
+  TABE_MAIN.forEach(function(cat){
+    var b=mkBtn(TABE_LABELS[cat]||cat,cat,'#e53935',false); b.title=cat;
+    b.addEventListener('click',function(){toggleF('tabe',cat,b,'#e53935');}); tg.appendChild(b);
+  });
+  var sep=document.createElement('div');
+  sep.style.cssText='grid-column:1/-1;border-top:1px dashed #ddd;margin:3px 0';
+  tg.appendChild(sep);
+  TABE_SWEETS.forEach(function(cat){
     var b=mkBtn(TABE_LABELS[cat]||cat,cat,'#e53935',false); b.title=cat;
     b.addEventListener('click',function(){toggleF('tabe',cat,b,'#e53935');}); tg.appendChild(b);
   });
