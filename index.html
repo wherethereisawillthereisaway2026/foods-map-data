@@ -640,6 +640,18 @@ function initMap(){
 }
 function doSearch(){
   var kw=document.getElementById('search-inp').value.trim();if(!kw)return;
+  var kl=kw.toLowerCase();
+  var found=allData.filter(function(d){return d.name&&d.name.toLowerCase().indexOf(kl)!==-1&&d.lat&&d.lng;});
+  if(found.length>0){
+    var item=found[0];
+    map.setCenter({lat:item.lat,lng:item.lng});
+    map.setZoom(16);
+    var tmp=new google.maps.Marker({position:{lat:item.lat,lng:item.lng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:SRC_COLOR[item.src]||'#9c27b0',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:10}});
+    showInfo(item,tmp);
+    infoWin.addListener('closeclick',function(){tmp.setMap(null);});
+    if(found.length>1)setStatus(found.length+'件ヒット: '+found.map(function(d){return d.name;}).slice(0,5).join(' / '));
+    return;
+  }
   new google.maps.Geocoder().geocode({address:kw,region:'JP'},function(res,st){if(st==='OK'&&res[0])map.fitBounds(res[0].geometry.viewport);});
 }
 
