@@ -80,7 +80,14 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
   <div id="status-bar">読み込み中...</div>
   <div id="budget-bar">
     <div class="blabel">💰 予算フィルター（全ソース横断）</div>
-    <div class="frow" id="budget-row"></div>
+    <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+      <span style="font-size:10px;color:#888;flex-shrink:0">🌙夜</span>
+      <div class="frow" id="budget-dinner-row" style="flex:1"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:3px">
+      <span style="font-size:10px;color:#888;flex-shrink:0">☀️昼</span>
+      <div class="frow" id="budget-lunch-row" style="flex:1"></div>
+    </div>
   </div>
   <div id="sb-scroll">
 
@@ -155,12 +162,19 @@ var MICH_AWARD_L = {'ミシュラン 三つ星':'★★★','ミシュラン 二
 var MICH_BUDGETS = [{label:'¥',val:3000},{label:'¥¥',val:8000},{label:'¥¥¥',val:20000},{label:'¥¥¥¥',val:40000}];
 var SRC_COLOR = {tabelog:'#e53935',goeimillau:'#43a047',michelin:'#f9a825',moppy:'#00b0a0'};
 var SRC_LABEL = {tabelog:'食べログ',goeimillau:'ゴ・エ・ミヨ',michelin:'ミシュラン',moppy:'Moppy'};
-var BUDGET_RANGES = [
-  {key:'b0', label:'不明',     min:0,     max:0},
-  {key:'b1', label:'〜¥3K',   min:1,     max:3000},
-  {key:'b2', label:'¥3K〜8K', min:3001,  max:8000},
-  {key:'b3', label:'¥8K〜2万',min:8001,  max:20000},
-  {key:'b4', label:'¥2万〜',  min:20001, max:Infinity},
+var BUDGET_RANGES_D = [
+  {key:'d0', label:'不明',     min:0,     max:0},
+  {key:'d1', label:'〜¥3K',   min:1,     max:3000},
+  {key:'d2', label:'¥3K〜8K', min:3001,  max:8000},
+  {key:'d3', label:'¥8K〜2万',min:8001,  max:20000},
+  {key:'d4', label:'¥2万〜',  min:20001, max:Infinity},
+];
+var BUDGET_RANGES_L = [
+  {key:'l0', label:'不明',    min:0,    max:0},
+  {key:'l1', label:'〜¥1K',  min:1,    max:1000},
+  {key:'l2', label:'¥1K〜2K',min:1001, max:2000},
+  {key:'l3', label:'¥2K〜4K',min:2001, max:4000},
+  {key:'l4', label:'¥4K〜',  min:4001, max:Infinity},
 ];
 
 var allData = [], moppyData = null, map, infoWin;
@@ -169,7 +183,8 @@ var dataLoaded = false, idleTimer = null;
 var moppyPinVisible = false;
 
 var fState = {
-  tabe:new Set(), goei:new Set(), mich_awards:new Set(), mich_budgets:new Set(), budgets:new Set()
+  tabe:new Set(), goei:new Set(), mich_awards:new Set(), mich_budgets:new Set(),
+  budgets_d:new Set(), budgets_l:new Set()
 };
 
 // ===== FILTERS =====
@@ -194,15 +209,21 @@ function buildFilters() {
     var b=mkBtn(bud.label,bud.val,'#f9a825',false);
     b.addEventListener('click',function(){toggleF('mich_budgets',bud.val,b,'#f9a825');}); mbr.appendChild(b);
   });
-  var bdr=document.getElementById('budget-row');
-  BUDGET_RANGES.forEach(function(r){
-    var b=mkBtn(r.label,r.key,'#6d4c41',false);
-    b.addEventListener('click',function(){toggleBudget(r.key,b);}); bdr.appendChild(b);
+  var bdr_d=document.getElementById('budget-dinner-row');
+  BUDGET_RANGES_D.forEach(function(r){
+    var b=mkBtn(r.label,r.key,'#5c6bc0',false);
+    b.addEventListener('click',function(){toggleBudgetKey('budgets_d',r.key,b,'#5c6bc0');}); bdr_d.appendChild(b);
+  });
+  var bdr_l=document.getElementById('budget-lunch-row');
+  BUDGET_RANGES_L.forEach(function(r){
+    var b=mkBtn(r.label,r.key,'#ef6c00',false);
+    b.addEventListener('click',function(){toggleBudgetKey('budgets_l',r.key,b,'#ef6c00');}); bdr_l.appendChild(b);
   });
 }
-function toggleBudget(key,btn){
-  if(fState.budgets.has(key)){fState.budgets.delete(key);btn.classList.remove('on');btn.style.background='';}
-  else{fState.budgets.add(key);btn.classList.add('on');btn.style.background='#6d4c41';}
+function toggleBudgetKey(stateKey,key,btn,color){
+  var set=fState[stateKey];
+  if(set.has(key)){set.delete(key);btn.classList.remove('on');btn.style.background='';}
+  else{set.add(key);btn.classList.add('on');btn.style.background=color;}
   renderMarkers(); saveF();
 }
 function mkBtn(label,val,color,on){
@@ -237,7 +258,7 @@ function selectAll(){
   var allOn=fState.tabe.size===TABELOG_CATS.length&&fState.goei.size===GOEI_GENRES.length&&fState.mich_awards.size===MICH_AWARDS.length;
   var btn=document.getElementById('select-all-btn');
   if(allOn){
-    fState.tabe=new Set();fState.goei=new Set();fState.mich_awards=new Set();fState.mich_budgets=new Set();fState.budgets=new Set();
+    fState.tabe=new Set();fState.goei=new Set();fState.mich_awards=new Set();fState.mich_budgets=new Set();fState.budgets_d=new Set();fState.budgets_l=new Set();
     document.querySelectorAll('.fbtn').forEach(function(b){b.classList.remove('on');b.style.background='';});
     btn.textContent='全選択';
   }else{
@@ -249,7 +270,7 @@ function selectAll(){
   }
   renderMarkers(); saveF();
 }
-function saveF(){try{localStorage.setItem('foods_f',JSON.stringify({tabe:[...fState.tabe],goei:[...fState.goei],ma:[...fState.mich_awards],mb:[...fState.mich_budgets],bdr:[...fState.budgets]}));}catch(e){}}
+function saveF(){try{localStorage.setItem('foods_f',JSON.stringify({tabe:[...fState.tabe],goei:[...fState.goei],ma:[...fState.mich_awards],mb:[...fState.mich_budgets],bd:[...fState.budgets_d],bl:[...fState.budgets_l]}));}catch(e){}}
 function loadF(){
   try{
     var s=JSON.parse(localStorage.getItem('foods_f')||'null');if(!s)return;
@@ -257,27 +278,32 @@ function loadF(){
     if(s.goei){fState.goei=new Set(s.goei);document.querySelectorAll('#goei-row .fbtn').forEach(function(b){var on=fState.goei.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#43a047':'';}); }
     if(s.ma){fState.mich_awards=new Set(s.ma);document.querySelectorAll('#mich-award-row .fbtn').forEach(function(b){var on=fState.mich_awards.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#f9a825':'';}); }
     if(s.mb){fState.mich_budgets=new Set(s.mb.map(Number));document.querySelectorAll('#mich-budget-row .fbtn').forEach(function(b){var on=fState.mich_budgets.has(Number(b.dataset.val));b.classList.toggle('on',on);b.style.background=on?'#f9a825':'';}); }
-    if(s.bdr){fState.budgets=new Set(s.bdr);document.querySelectorAll('#budget-row .fbtn').forEach(function(b){var on=fState.budgets.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#6d4c41':'';}); }
+    if(s.bd){fState.budgets_d=new Set(s.bd);document.querySelectorAll('#budget-dinner-row .fbtn').forEach(function(b){var on=fState.budgets_d.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#5c6bc0':'';}); }
+    if(s.bl){fState.budgets_l=new Set(s.bl);document.querySelectorAll('#budget-lunch-row .fbtn').forEach(function(b){var on=fState.budgets_l.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#ef6c00':'';}); }
   }catch(e){}
 }
 
 // ===== DISPLAY =====
-function passBudgetFilter(item){
-  if(fState.budgets.size===0)return true;
-  var bgt=item.bgt||0;
+function _matchBgtSet(stateKey, ranges, val){
+  var set=fState[stateKey];
+  if(set.size===0)return true;
   var matched=false;
-  fState.budgets.forEach(function(key){
-    var r=BUDGET_RANGES.find(function(x){return x.key===key;});
+  set.forEach(function(key){
+    var r=ranges.find(function(x){return x.key===key;});
     if(!r)return;
-    if(r.key==='b0'){if(bgt===0)matched=true;}
-    else if(bgt>=r.min&&bgt<=r.max)matched=true;
+    if(r.min===0&&r.max===0){if(val===0)matched=true;}
+    else if(val>=r.min&&val<=r.max)matched=true;
   });
   return matched;
+}
+function passBudgetFilter(item){
+  var bgt_d=item.bgt_d||0, bgt_l=item.bgt_l||0;
+  return _matchBgtSet('budgets_d',BUDGET_RANGES_D,bgt_d) && _matchBgtSet('budgets_l',BUDGET_RANGES_L,bgt_l);
 }
 function shouldDisplay(item){
   if(item.src==='tabelog')    return fState.tabe.has(item.award) && passBudgetFilter(item);
   if(item.src==='goeimillau') return fState.goei.has(item.genre) && passBudgetFilter(item);
-  if(item.src==='michelin'){if(!fState.mich_awards.has(item.award))return false;if(!item.bgt&&!fState.mich_budgets.has(item.bgt)&&fState.mich_budgets.size>0)return fState.mich_budgets.has(0)||false;if(fState.mich_budgets.size>0&&!fState.mich_budgets.has(item.bgt))return false;return passBudgetFilter(item);}
+  if(item.src==='michelin'){if(!fState.mich_awards.has(item.award))return false;if(fState.mich_budgets.size>0&&!fState.mich_budgets.has(item.bgt_d||0))return false;return passBudgetFilter(item);}
   if(item.src==='moppy') return moppyPinVisible && passBudgetFilter(item);
   return false;
 }
