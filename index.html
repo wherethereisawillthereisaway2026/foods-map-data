@@ -524,7 +524,7 @@ function geocodeMylist(){
   });
 }
 function gasPost(payload,cb){
-  fetch(FOODS_GAS_URL,{method:'POST',mode:'no-cors',body:JSON.stringify(payload)})
+  fetch(FOODS_GAS_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain'},body:JSON.stringify(payload)})
     .then(function(){if(cb)cb({ok:true});}).catch(function(e){if(cb)cb({ok:false,error:e.message});});
 }
 function saveMylistItem(){
