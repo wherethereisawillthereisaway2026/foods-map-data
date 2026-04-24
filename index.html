@@ -244,7 +244,7 @@ var BUDGET_RANGES_L = [
 
 var allData = [], moppyData = null, map, infoWin;
 var markerPool = new Map();
-var dataLoaded = false, idleTimer = null;
+var dataLoaded = false;
 var moppyPinVisible = false;
 var mylistPinVisible = true;
 var mylistData = [];
@@ -304,7 +304,7 @@ function toggleBudgetKey(stateKey,key,btn,color){
   var set=fState[stateKey];
   if(set.has(key)){set.delete(key);btn.classList.remove('on');btn.style.background='';}
   else{set.add(key);btn.classList.add('on');btn.style.background=color;}
-  renderMarkers(); saveF();
+  renderMarkers();
 }
 function mkBtn(label,val,color,on){
   var b=document.createElement('button');
@@ -315,7 +315,7 @@ function toggleF(key,val,btn,color){
   var set=fState[key], nv=(key==='mich_budgets')?Number(val):val;
   if(set.has(nv)){set.delete(nv);btn.classList.remove('on');btn.style.background='';}
   else{set.add(nv);btn.classList.add('on');btn.style.background=color;}
-  renderMarkers(); saveF();
+  renderMarkers();
 }
 function srcAll(src){
   if(src==='tabelog'){
@@ -332,7 +332,7 @@ function srcAll(src){
     fState.mich_budgets=on?new Set():new Set([3000,8000,20000,40000]);
     document.querySelectorAll('#mich-award-row .fbtn,#mich-budget-row .fbtn').forEach(function(b){b.classList.toggle('on',!on);b.style.background=!on?'#f9a825':'';});
   }
-  renderMarkers(); saveF();
+  renderMarkers();
 }
 function selectAll(){
   var allOn=fState.tabe.size===TABELOG_CATS.length&&fState.goei.size===GOEI_GENRES.length&&fState.mich_awards.size===MICH_AWARDS.length;
@@ -348,19 +348,7 @@ function selectAll(){
     document.querySelectorAll('#mich-award-row .fbtn,#mich-budget-row .fbtn').forEach(function(b){b.classList.add('on');b.style.background='#f9a825';});
     btn.textContent='全解除';
   }
-  renderMarkers(); saveF();
-}
-function saveF(){try{localStorage.setItem('foods_f',JSON.stringify({tabe:[...fState.tabe],goei:[...fState.goei],ma:[...fState.mich_awards],mb:[...fState.mich_budgets],bd:[...fState.budgets_d],bl:[...fState.budgets_l]}));}catch(e){}}
-function loadF(){
-  try{
-    var s=JSON.parse(localStorage.getItem('foods_f')||'null');if(!s)return;
-    if(s.tabe){fState.tabe=new Set(s.tabe);document.querySelectorAll('#tabe-grid .fbtn').forEach(function(b){var on=fState.tabe.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#e53935':'';}); }
-    if(s.goei){fState.goei=new Set(s.goei);document.querySelectorAll('#goei-row .fbtn').forEach(function(b){var on=fState.goei.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#43a047':'';}); }
-    if(s.ma){fState.mich_awards=new Set(s.ma);document.querySelectorAll('#mich-award-row .fbtn').forEach(function(b){var on=fState.mich_awards.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#f9a825':'';}); }
-    if(s.mb){fState.mich_budgets=new Set(s.mb.map(Number));document.querySelectorAll('#mich-budget-row .fbtn').forEach(function(b){var on=fState.mich_budgets.has(Number(b.dataset.val));b.classList.toggle('on',on);b.style.background=on?'#f9a825':'';}); }
-    if(s.bd){fState.budgets_d=new Set(s.bd);document.querySelectorAll('#budget-dinner-row .fbtn').forEach(function(b){var on=fState.budgets_d.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#5c6bc0':'';}); }
-    if(s.bl){fState.budgets_l=new Set(s.bl);document.querySelectorAll('#budget-lunch-row .fbtn').forEach(function(b){var on=fState.budgets_l.has(b.dataset.val);b.classList.toggle('on',on);b.style.background=on?'#ef6c00':'';}); }
-  }catch(e){}
+  renderMarkers();
 }
 
 // ===== DISPLAY =====
@@ -647,10 +635,11 @@ function initMap(){
     var c=map.getCenter();
     try{localStorage.setItem('foods_pos',JSON.stringify({lat:c.lat(),lng:c.lng(),z:map.getZoom()}));}catch(e){}
     if(!dataLoaded)return;
-    clearTimeout(idleTimer);idleTimer=setTimeout(renderMarkers,150);
+    renderMarkers();
   });
   map.addListener('click',function(){infoWin.close();});
-  loadMylist();loadMemo();buildFilters();buildMylistGenreSelect();loadF();renderMylistItems();
+  try{localStorage.removeItem('foods_f');}catch(e){}
+  loadMylist();loadMemo();buildFilters();buildMylistGenreSelect();renderMylistItems();
   loadMoppyData(function(){loadFoodsData();});
   document.getElementById('locate-btn').addEventListener('click',function(){
     if(!navigator.geolocation)return;
