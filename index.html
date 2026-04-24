@@ -444,14 +444,15 @@ function showInfo(item,marker){
   var MICH_STAR={'ミシュラン 三つ星':'★★★','ミシュラン 二つ星':'★★','ミシュラン 一つ星':'★','ビブグルマン':'BIB'};
   var dupExtra='';
   var dupUrls={};
+  var dupAdded={};
   if(item.dup&&item.dup.length>1){
     var THRESH=0.0005;
     allData.forEach(function(d){
       if(d.src===item.src||Math.abs(d.lat-item.lat)>THRESH||Math.abs(d.lng-item.lng)>THRESH)return;
       if(d.url&&!dupUrls[d.src])dupUrls[d.src]=d.url;
-      if(d.src==='tabelog'&&d.score)dupExtra+='<div class="iw-row" style="color:#e53935">🍴 食べログ '+esc(d.score)+'</div>';
-      if(d.src==='goeimillau'&&d.score)dupExtra+='<div class="iw-row" style="color:#43a047">🍽 ゴ・エ・ミヨ '+esc(d.score)+'/20点</div>';
-      if(d.src==='michelin'&&d.award)dupExtra+='<div class="iw-row" style="color:#f9a825">⭐ ミシュラン '+(MICH_STAR[d.award]||esc(d.award))+'</div>';
+      if(d.src==='tabelog'&&d.score&&!dupAdded.tabelog){dupAdded.tabelog=true;dupExtra+='<div class="iw-row" style="color:#e53935">🍴 食べログ '+esc(d.score)+'</div>';}
+      if(d.src==='goeimillau'&&d.score&&!dupAdded.goeimillau){dupAdded.goeimillau=true;dupExtra+='<div class="iw-row" style="color:#43a047">🍽 ゴ・エ・ミヨ '+esc(d.score)+'/20点</div>';}
+      if(d.src==='michelin'&&d.award&&!dupAdded.michelin){dupAdded.michelin=true;dupExtra+='<div class="iw-row" style="color:#f9a825">⭐ ミシュラン '+(MICH_STAR[d.award]||esc(d.award))+'</div>';}
     });
   }
   var html='<div class="iw" id="iw-inner">'
