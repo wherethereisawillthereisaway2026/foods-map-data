@@ -369,9 +369,9 @@ function passBudgetFilter(item){
   return _matchBgtSet('budgets_d',BUDGET_RANGES_D,bgt_d) && _matchBgtSet('budgets_l',BUDGET_RANGES_L,bgt_l);
 }
 function shouldDisplay(item){
-  if(item.src==='tabelog')    return (fState.tabe.size===0||fState.tabe.has(item.award)) && passBudgetFilter(item);
-  if(item.src==='goeimillau') return (fState.goei.size===0||fState.goei.has(item.genre)) && passBudgetFilter(item);
-  if(item.src==='michelin'){if(fState.mich_awards.size>0&&!fState.mich_awards.has(item.award))return false;if(fState.mich_budgets.size>0&&!fState.mich_budgets.has(item.bgt_d||0))return false;return passBudgetFilter(item);}
+  if(item.src==='tabelog')    return fState.tabe.size>0 && fState.tabe.has(item.award) && passBudgetFilter(item);
+  if(item.src==='goeimillau') return fState.goei.size>0 && fState.goei.has(item.genre) && passBudgetFilter(item);
+  if(item.src==='michelin'){if(fState.mich_awards.size===0)return false;if(!fState.mich_awards.has(item.award))return false;if(fState.mich_budgets.size>0&&!fState.mich_budgets.has(item.bgt_d||0))return false;return passBudgetFilter(item);}
   if(item.src==='moppy') return moppyPinVisible && passBudgetFilter(item);
   if(item.src==='mylist') return mylistPinVisible;
   return false;
