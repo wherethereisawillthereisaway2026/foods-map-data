@@ -533,8 +533,10 @@ function saveMylistItem(){
   if(!_mlLat||!_mlLng){document.getElementById('ml-geo-status').textContent='住所を検索してください';return;}
   var saveBtn=document.querySelector('#ml-box .ml-btn.primary');
   if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='保存中…';}
+  var id='ml_'+Date.now();
   var payload={
     action:'addMylist',
+    id:id,
     name:name,
     address:document.getElementById('ml-addr').value.trim(),
     lat:_mlLat,lng:_mlLng,
@@ -545,8 +547,7 @@ function saveMylistItem(){
   };
   gasPost(payload,function(res){
     // GASはno-corsでレスポンス読めないので常にok扱い
-    var id='ml_'+Date.now();
-    var item=Object.assign({id:id,src:'mylist',url:'',pid:'',award:'',score:'',sbgt:'',area:''},payload);
+    var item=Object.assign({src:'mylist',url:'',pid:'',award:'',score:'',sbgt:'',area:''},payload);
     item.bgt_l=Number(payload.bgt_l)||0;item.bgt_d=Number(payload.bgt_d)||0;
     if(item.memo){memoData[getKey(item)]=item.memo;try{localStorage.setItem('foods_memo',JSON.stringify(memoData));}catch(e){}}
     mylistData.push(item);saveMylist();
@@ -563,6 +564,7 @@ function deleteMylistItem(id){
   var m=markerPool.get(key);if(m)m.setMap(null);markerPool.delete(key);
   delete memoData[key];try{localStorage.setItem('foods_memo',JSON.stringify(memoData));}catch(e){}
   renderMylistItems();renderMarkers();
+  gasPost({action:'deleteMylist',id:id},null);
 }
 function renderMylistItems(){
   var el=document.getElementById('mylist-items');el.innerHTML='';
