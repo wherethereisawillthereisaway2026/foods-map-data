@@ -640,8 +640,8 @@ function initMap(){
 }
 function doSearch(){
   var kw=document.getElementById('search-inp').value.trim();if(!kw)return;
-  var kl=kw.toLowerCase();
-  var found=allData.filter(function(d){return d.name&&d.name.toLowerCase().indexOf(kl)!==-1&&d.lat&&d.lng;});
+  var kl=kw.toLowerCase().replace(/\s+/g,'');
+  var found=allData.filter(function(d){return d.name&&d.name.toLowerCase().replace(/\s+/g,'').indexOf(kl)!==-1&&d.lat&&d.lng;});
   if(found.length>0){
     var item=found[0];
     map.setCenter({lat:item.lat,lng:item.lng});
