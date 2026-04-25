@@ -460,12 +460,17 @@ function showInfo(item,marker){
   var dupExtra='';
   var dupUrls={};
   var dupAdded={};
+  var dupTabelogBgt='';
   if(item.dup&&item.dup.length>1){
     var THRESH=0.0002;
     allData.forEach(function(d){
       if(d.src===item.src||Math.abs(d.lat-item.lat)>THRESH||Math.abs(d.lng-item.lng)>THRESH)return;
       if(d.url&&(!dupUrls[d.src]||(item.pid&&d.pid&&d.pid===item.pid)))dupUrls[d.src]=d.url;
-      if(d.src==='tabelog'&&d.score&&!dupAdded.tabelog){dupAdded.tabelog=true;dupExtra+='<div class="iw-row" style="color:#e53935">🍴 食べログ '+esc(d.score)+'</div>';}
+      if(d.src==='tabelog'&&!dupAdded.tabelog){
+        dupAdded.tabelog=true;
+        if(d.score)dupExtra+='<div class="iw-row" style="color:#e53935">🍴 食べログ '+esc(d.score)+'</div>';
+        if(item.src!=='tabelog')dupTabelogBgt=d.sbgt||(d.bgt_d?'夜 ¥'+Number(d.bgt_d).toLocaleString()+(d.bgt_l?' / 昼 ¥'+Number(d.bgt_l).toLocaleString():''):'');
+      }
       if(d.src==='goeimillau'&&d.score&&!dupAdded.goeimillau){dupAdded.goeimillau=true;dupExtra+='<div class="iw-row" style="color:#43a047">🍽 ゴ・エ・ミヨ '+esc(d.score)+'/20点</div>';}
       if(d.src==='michelin'&&d.award&&!dupAdded.michelin){dupAdded.michelin=true;dupExtra+='<div class="iw-row" style="color:#f9a825">⭐ ミシュラン '+(MICH_STAR[d.award]||esc(d.award))+'</div>';}
     });
@@ -479,6 +484,7 @@ function showInfo(item,marker){
     +(item.genre&&item.src!=='tabelog'?'<div class="iw-row">🍽 '+esc(item.genre)+'</div>':'')
     +dupExtra
     +(bgtStr?'<div class="iw-row">💰 '+esc(bgtStr)+'</div>':'')
+    +(dupTabelogBgt?'<div class="iw-row" style="color:#e53935">💰 食べログ '+esc(dupTabelogBgt)+'</div>':'')
     +(item.area?'<div class="iw-row">📍 '+esc(item.area)+'</div>':'')
     +(isMaster&&existingMemo?'<div class="iw-memo-existing" onclick="openMemoEdit(\''+esc(key)+'\')">📝 '+esc(existingMemo)+'</div>':'')
     +'<div class="iw-links">'
