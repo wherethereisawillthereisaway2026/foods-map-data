@@ -939,7 +939,7 @@ function toggleSidebar(){
 })();
 
 // ===== MOPPY UPDATE =====
-var STEP_NAMES=['Set up job','Run actions/checkout@v4','Checkout GAS project','Setup Python','Install dependencies','Setup clasp','Run scraper','Commit GAS data'];
+var STEP_NAMES=['Set up job','Run actions/checkout@v4','Checkout GAS project','Checkout foods-map-data','Setup Python','Install dependencies','Setup clasp','Run scraper','Commit GAS data','Commit moppy-data.json to foods-map-data','Deploy to GAS'];
 var _confPending=false,_confTimer=null,pollTimer=null,currentRunId=null;
 function handleUpdateClick(btn){
   if(btn.disabled)return;
