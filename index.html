@@ -483,6 +483,7 @@ function showInfo(item,marker){
     +(isMaster&&existingMemo?'<div class="iw-memo-existing" onclick="openMemoEdit(\''+esc(key)+'\')">📝 '+esc(existingMemo)+'</div>':'')
     +'<div class="iw-links">'
     +(isMaster?'<a class="iw-link" style="background:'+color+'" href="#" onclick="openMemoEdit(\''+esc(key)+'\');return false">メモ</a>':'')
+    +(item.ikyu_id?'<a class="iw-link" style="background:#c00" href="https://restaurant.ikyu.com/'+item.ikyu_id+'" target="_blank" rel="noopener">一休</a>':'')
     +'<a class="iw-link" style="background:#555" href="'+gmUrl+'" target="_blank" rel="noopener">Googleマップ</a></div></div>';
   infoWin.setContent(html);infoWin.open(map,marker);
 }
