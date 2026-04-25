@@ -146,11 +146,14 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     <div class="sec" id="mylist-sec">
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#9c27b0"></span>マイリスト</span>
-        <div style="display:flex;gap:4px">
+        <div style="display:flex;gap:4px;flex-wrap:wrap">
           <button id="ml-pin-btn" class="sec-all" onclick="toggleMylistPin()" style="background:#9c27b0;color:#fff">ピン表示</button>
-          <button class="sec-all" onclick="openMylistModal()" style="background:#f3e5f5;color:#6a1b9a">＋ 追加</button>
+          <button class="sec-all" onclick="openMylistModal(null)" style="background:#f3e5f5;color:#6a1b9a">＋ 追加</button>
+          <button id="ml-geocode-btn" class="sec-all" onclick="geocodeAllMylist()" style="display:none;background:#673ab7;color:#fff">📍ジオコード</button>
+          <button id="ml-export-btn" class="sec-all" onclick="downloadMylistJson()" style="display:none;background:#4caf50;color:#fff">⬇ JSON</button>
         </div>
       </div>
+      <div id="mylist-items"></div>
     </div>
 
     <div class="sec">
@@ -178,21 +181,19 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 
 <div id="ml-modal" onclick="if(event.target===this)closeMylistModal()">
   <div id="ml-box">
-    <div style="font-size:14px;font-weight:700;margin-bottom:4px">マイリスト 店舗追加</div>
+    <div id="ml-modal-title" style="font-size:14px;font-weight:700;margin-bottom:4px">マイリスト 追加</div>
     <label>店名（必須）</label>
     <input id="ml-name" type="text" placeholder="例：すきやばし次郎">
-    <label>住所</label>
-    <div class="ml-row">
-      <input id="ml-addr" type="text" placeholder="例：東京都中央区銀座4-2-15">
-      <button class="sec-all" onclick="geocodeMylist()" style="white-space:nowrap;padding:0 10px">検索</button>
+    <div id="ml-addr-wrap">
+      <label>住所（ジオコード用）</label>
+      <div class="ml-row">
+        <input id="ml-addr" type="text" placeholder="例：東京都中央区銀座4-2-15">
+        <button class="sec-all" onclick="geocodeMylist()" style="white-space:nowrap;padding:0 10px">検索</button>
+      </div>
+      <div id="ml-geo-status"></div>
     </div>
-    <div id="ml-geo-status"></div>
-    <label>ジャンル</label>
-    <select id="ml-genre"><option value="">選択してください</option></select>
-    <label>ランチ予算（円）</label>
-    <input id="ml-bgt-l" type="number" placeholder="例：2000" min="0">
-    <label>ディナー予算（円）</label>
-    <input id="ml-bgt-d" type="number" placeholder="例：15000" min="0">
+    <label>タグ</label>
+    <input id="ml-tag" type="text" placeholder="例：デート・記念日・ランチ">
     <label>メモ</label>
     <textarea id="ml-memo" placeholder="自由にメモを入力できます"></textarea>
     <div class="ml-btns">
@@ -211,6 +212,8 @@ var GH_TOKEN = _t[0]+_t[1];
 var GH_REPO  = 'wherethereisawillthereisaway2026/moppy-scraper';
 var MOPPY_DATA_URL = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/moppy-data.json';
 var FOODS_GAS_URL  = 'https://script.google.com/macros/s/AKfycbzFhfWjjQripKM0_--JQpT1QRjy6Os6D4z4ukXqcnl8YU58Xb9PUOxvdXfaT0IHr8v1IQ/exec';
+var MYLIST_GAS_URL = 'https://script.google.com/macros/s/AKfycbwFoq_EpDifhuNWMeVVCr449LymrYdocIjGgAIQbprj4ypUafETB9T_vRwFQwfgYI-9gw/exec';
+var MYLIST_CDN     = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/mylist_data.json';
 
 var FOODS_CDN       = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/data.json';
 var FOODS_CACHE_KEY = 'foods_v3';
@@ -251,14 +254,34 @@ var moppyPinVisible = false;
 var mylistPinVisible = true;
 var mylistData = [];
 var memoData = {};
-var _mlLat = null, _mlLng = null;
-var _dataIndex = new Map();   // key→item（allData変更時のみ再構築）
-var _filterSet = new Set();   // shouldDisplay=trueのキー集合
-var _filterDirty = true;      // フィルタ変更フラグ
+var _mlLat = null, _mlLng = null, _editingId = null;
+var _dataIndex = new Map();
+var _filterSet = new Set();
+var _filterDirty = true;
 
-function loadMylist(){try{mylistData=JSON.parse(localStorage.getItem('foods_mylist')||'[]');}catch(e){mylistData=[];}}
-function saveMylist(){try{localStorage.setItem('foods_mylist',JSON.stringify(mylistData));}catch(e){}}
+function getLocalChanges(){try{return JSON.parse(localStorage.getItem('foods_mylist_changes')||'{}');}catch(e){return {};}}
+function saveLocalChanges(c){try{localStorage.setItem('foods_mylist_changes',JSON.stringify(c));}catch(e){}}
 function loadMemo(){try{memoData=JSON.parse(localStorage.getItem('foods_memo')||'{}');}catch(e){memoData={};}}
+
+function loadMylistData(cb){
+  var c=getLocalChanges();
+  var localAdded=c.added||[];
+  var localEdited=c.edited||{};
+  var localDeleted=new Set(c.deleted||[]);
+  fetch(MYLIST_CDN+'?t='+Date.now())
+    .then(function(r){return r.json();})
+    .then(function(data){
+      mylistData=data
+        .filter(function(m){return !localDeleted.has(m.id);})
+        .map(function(m){var ov=localEdited[m.id];return ov?Object.assign({},m,ov):m;});
+      localAdded.forEach(function(m){if(!localDeleted.has(m.id))mylistData.push(m);});
+      cb();
+    })
+    .catch(function(){
+      mylistData=localAdded.filter(function(m){return !localDeleted.has(m.id);});
+      cb();
+    });
+}
 
 var fState = {
   tabe:new Set(), goei:new Set(), mich_awards:new Set(), mich_budgets:new Set(),
@@ -448,7 +471,22 @@ function createMarker(item){
   marker.addListener('click',function(e){e.stop();showInfo(item,marker);});
   markerPool.set(getKey(item),marker);return marker;
 }
+function showMylistInfo(item,marker){
+  var gmUrl=item.url||(item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:'https://maps.google.com/?q='+item.lat+','+item.lng);
+  var html='<div class="iw" id="iw-inner">'
+    +'<span class="iw-src" style="background:#9c27b0">マイリスト</span>'
+    +'<div class="iw-name"><a href="'+esc(gmUrl)+'" target="_blank" rel="noopener">'+esc(item.name)+'</a></div>'
+    +(item.tag?'<div class="iw-row">🏷 '+esc(item.tag)+'</div>':'')
+    +(item.memo?'<div class="iw-row" style="white-space:pre-wrap">📝 '+esc(item.memo)+'</div>':'')
+    +'<div class="iw-links">'
+    +(isMaster?'<a class="iw-link" style="background:#9c27b0" href="#" onclick="openMylistEdit(\''+esc(item.id)+'\');return false">編集</a>':'')
+    +(isMaster?'<a class="iw-link" style="background:#e53935" href="#" onclick="confirmDeleteMylist(\''+esc(item.id)+'\');return false">削除</a>':'')
+    +'<a class="iw-link" style="background:#555" href="'+esc(gmUrl)+'" target="_blank" rel="noopener">地図</a>'
+    +'</div></div>';
+  infoWin.setContent(html);infoWin.open(map,marker);
+}
 function showInfo(item,marker){
+  if(item.src==='mylist'){showMylistInfo(item,marker);return;}
   var color=SRC_COLOR[item.src]||'#999';
   var bgtStr=item.sbgt||(item.bgt_d?'夜 ¥'+Number(item.bgt_d).toLocaleString()+(item.bgt_l?' / 昼 ¥'+Number(item.bgt_l).toLocaleString():''):'');
   var gmUrl=item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:(item.lat&&item.lng)?'https://maps.google.com/?q='+item.lat+','+item.lng:'https://www.google.com/maps/search/'+encodeURIComponent(item.name);
@@ -514,28 +552,40 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function setStatus(t){document.getElementById('status-bar').textContent=t;}
 
 // ===== MYLIST =====
-function buildMylistGenreSelect(){
-  var sel=document.getElementById('ml-genre');
-  TABELOG_CATS.forEach(function(cat){
-    var o=document.createElement('option');o.value=cat;o.textContent=TABE_LABELS[cat]||cat;sel.appendChild(o);
-  });
-}
 function openMylistModal(prefill){
+  _editingId=null;
   _mlLat=(prefill&&prefill.lat)||null;
   _mlLng=(prefill&&prefill.lng)||null;
+  document.getElementById('ml-modal-title').textContent='マイリスト 追加';
   document.getElementById('ml-name').value=(prefill&&prefill.name)||'';
+  document.getElementById('ml-name').disabled=false;
   document.getElementById('ml-addr').value=(prefill&&prefill.address)||'';
   document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置取得済':'');
-  document.getElementById('ml-genre').value='';
-  document.getElementById('ml-bgt-l').value='';
-  document.getElementById('ml-bgt-d').value='';
+  document.getElementById('ml-addr-wrap').style.display='block';
+  document.getElementById('ml-tag').value='';
   document.getElementById('ml-memo').value='';
   document.getElementById('ml-modal').classList.add('open');
 }
-function closeMylistModal(){document.getElementById('ml-modal').classList.remove('open');}
+function openMylistEdit(id){
+  var item=mylistData.find(function(m){return m.id===id;});if(!item)return;
+  _editingId=id;
+  _mlLat=item.lat||null;_mlLng=item.lng||null;
+  document.getElementById('ml-modal-title').textContent='マイリスト 編集';
+  document.getElementById('ml-name').value=item.name;
+  document.getElementById('ml-name').disabled=true;
+  document.getElementById('ml-addr-wrap').style.display=(_mlLat?'none':'block');
+  document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置済み':'未ジオコード');
+  document.getElementById('ml-tag').value=item.tag||'';
+  document.getElementById('ml-memo').value=item.memo||'';
+  document.getElementById('ml-modal').classList.add('open');
+}
+function closeMylistModal(){
+  document.getElementById('ml-modal').classList.remove('open');
+  document.getElementById('ml-name').disabled=false;
+}
 function geocodeMylist(){
-  var addr=document.getElementById('ml-addr').value.trim();
-  if(!addr){document.getElementById('ml-geo-status').textContent='住所を入力してください';return;}
+  var addr=document.getElementById('ml-addr').value.trim()||document.getElementById('ml-name').value.trim();
+  if(!addr){document.getElementById('ml-geo-status').textContent='住所か店名を入力してください';return;}
   document.getElementById('ml-geo-status').textContent='検索中...';
   new google.maps.Geocoder().geocode({address:addr,region:'JP'},function(res,st){
     if(st==='OK'&&res[0]){
@@ -548,63 +598,113 @@ function geocodeMylist(){
     }
   });
 }
-function gasPost(payload,cb){
+function mlGasPost(payload){
   var fid='gf_'+Date.now();
   var ifr=document.createElement('iframe');ifr.name=fid;ifr.style.display='none';document.body.appendChild(ifr);
-  var frm=document.createElement('form');frm.action=FOODS_GAS_URL;frm.method='POST';frm.target=fid;frm.style.display='none';
+  var frm=document.createElement('form');frm.action=MYLIST_GAS_URL;frm.method='POST';frm.target=fid;frm.style.display='none';
   var inp=document.createElement('input');inp.type='hidden';inp.name='payload';inp.value=JSON.stringify(payload);
   frm.appendChild(inp);document.body.appendChild(frm);frm.submit();
-  setTimeout(function(){if(frm.parentNode)frm.parentNode.removeChild(frm);if(ifr.parentNode)ifr.parentNode.removeChild(ifr);if(cb)cb({ok:true});},3000);
+  setTimeout(function(){if(frm.parentNode)frm.parentNode.removeChild(frm);if(ifr.parentNode)ifr.parentNode.removeChild(ifr);},3000);
 }
 function saveMylistItem(){
   var name=document.getElementById('ml-name').value.trim();
   if(!name){document.getElementById('ml-name').focus();return;}
+  var memo=document.getElementById('ml-memo').value.trim();
+  var tag=document.getElementById('ml-tag').value.trim();
+  var c=getLocalChanges();
+
+  if(_editingId){
+    // 編集モード
+    var item=mylistData.find(function(m){return m.id===_editingId;});
+    if(item){item.memo=memo;item.tag=tag;}
+    c.edited=c.edited||{};
+    c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},{memo:memo,tag:tag});
+    saveLocalChanges(c);
+    mlGasPost({action:'editMylist',id:_editingId,memo:memo,tag:tag});
+    var mk=markerPool.get('mylist|'+_editingId);if(mk)mk._item=item;
+    renderMylistItems();closeMylistModal();
+    return;
+  }
+
+  // 追加モード
   if(!_mlLat||!_mlLng){document.getElementById('ml-geo-status').textContent='住所を検索してください';return;}
-  var saveBtn=document.querySelector('#ml-box .ml-btn.primary');
-  if(saveBtn){saveBtn.disabled=true;saveBtn.textContent='保存中…';}
   var id='ml_'+Date.now();
-  var payload={
-    action:'addMylist',
-    id:id,
-    name:name,
-    address:document.getElementById('ml-addr').value.trim(),
-    lat:_mlLat,lng:_mlLng,
-    genre:document.getElementById('ml-genre').value,
-    bgt_l:Number(document.getElementById('ml-bgt-l').value)||0,
-    bgt_d:Number(document.getElementById('ml-bgt-d').value)||0,
-    memo:document.getElementById('ml-memo').value.trim(),
-  };
-  gasPost(payload,function(res){
-    // GASはno-corsでレスポンス読めないので常にok扱い
-    var item=Object.assign({src:'mylist',url:'',pid:'',award:'',score:'',sbgt:'',area:''},payload);
-    item.bgt_l=Number(payload.bgt_l)||0;item.bgt_d=Number(payload.bgt_d)||0;
-    if(item.memo){memoData[getKey(item)]=item.memo;try{localStorage.setItem('foods_memo',JSON.stringify(memoData));}catch(e){}}
-    mylistData.push(item);saveMylist();
-    allData.push(item);renderMylistItems();rebuildDataIndex();renderMarkers();
-    if(saveBtn){saveBtn.disabled=false;saveBtn.textContent='保存';}
-    closeMylistModal();
-  });
+  var item={src:'mylist',id:id,name:name,memo:memo,tag:tag,url:'',pid:'',award:'',score:'',sbgt:'',area:'',lat:_mlLat,lng:_mlLng,bgt_d:0,bgt_l:0};
+  c.added=c.added||[];
+  c.added.push(item);
+  saveLocalChanges(c);
+  mylistData.push(item);
+  allData.push(item);
+  mlGasPost({action:'addMylist',id:id,name:name,memo:memo,tag:tag,lat:_mlLat,lng:_mlLng,url:''});
+  renderMylistItems();rebuildDataIndex();renderMarkers();
+  closeMylistModal();
+}
+function confirmDeleteMylist(id){
+  var item=mylistData.find(function(m){return m.id===id;});
+  if(!item)return;
+  if(!confirm(item.name+' を削除しますか？'))return;
+  deleteMylistItem(id);
 }
 function deleteMylistItem(id){
+  var c=getLocalChanges();
+  c.deleted=c.deleted||[];
+  if(c.deleted.indexOf(id)===-1)c.deleted.push(id);
+  c.added=(c.added||[]).filter(function(m){return m.id!==id;});
+  if(c.edited)delete c.edited[id];
+  saveLocalChanges(c);
   mylistData=mylistData.filter(function(m){return m.id!==id;});
-  saveMylist();
   allData=allData.filter(function(d){return!(d.src==='mylist'&&d.id===id);});
   var key='mylist|'+id;
   var m=markerPool.get(key);if(m)m.setMap(null);markerPool.delete(key);
-  delete memoData[key];try{localStorage.setItem('foods_memo',JSON.stringify(memoData));}catch(e){}
-  renderMylistItems();rebuildDataIndex();renderMarkers();
-  gasPost({action:'deleteMylist',id:id},null);
+  mlGasPost({action:'deleteMylist',id:id});
+  renderMylistItems();rebuildDataIndex();
 }
 function renderMylistItems(){
   var el=document.getElementById('mylist-items');if(!el)return;el.innerHTML='';
+  var geo=mylistData.filter(function(m){return m.lat&&m.lng;});
+  var nogeo=mylistData.filter(function(m){return !m.lat||!m.lng;});
   if(!mylistData.length){el.innerHTML='<div style="font-size:11px;color:#aaa;padding:4px">登録なし</div>';return;}
-  mylistData.forEach(function(m){
+  if(nogeo.length){el.innerHTML='<div style="font-size:10px;color:#e65100;padding:2px 4px">📍未ジオコード '+nogeo.length+'件 — 「📍ジオコード」ボタンで座標を取得してください</div>';}
+  geo.forEach(function(m){
     var row=document.createElement('div');row.className='ml-item';
-    row.innerHTML='<span class="ml-item-name">'+esc(m.name)+(m.genre?'<span style="font-size:9px;color:#9c27b0;margin-left:4px">'+esc(m.genre)+'</span>':'')+'</span>'
-      +'<button class="ml-item-del" onclick="deleteMylistItem(\''+esc(m.id)+'\');event.stopPropagation()">✕</button>';
+    row.innerHTML='<span class="ml-item-name">'+esc(m.name)+(m.tag?'<span style="font-size:9px;color:#9c27b0;margin-left:4px">'+esc(m.tag)+'</span>':'')+'</span>';
+    if(isMaster){row.innerHTML+='<button class="ml-item-del" onclick="confirmDeleteMylist(\''+esc(m.id)+'\');event.stopPropagation()">✕</button>';}
     row.addEventListener('click',function(){map.setCenter({lat:m.lat,lng:m.lng});map.setZoom(16);});
     el.appendChild(row);
   });
+}
+function geocodeAllMylist(){
+  var pending=mylistData.filter(function(m){return !m.lat||!m.lng;});
+  if(!pending.length){setStatus('全件ジオコード済み');return;}
+  var geocoder=new google.maps.Geocoder();
+  var done=0,miss=0,total=pending.length;
+  setStatus('ジオコード開始: '+total+'件');
+  function next(i){
+    if(i>=total){
+      // 結果をlocalChangesに保存
+      var c=getLocalChanges();c.edited=c.edited||{};
+      mylistData.forEach(function(m){if(m.lat&&m.lng){var ex=c.edited[m.id]||{};c.edited[m.id]=Object.assign(ex,{lat:m.lat,lng:m.lng,pid:m.pid||''});}});
+      saveLocalChanges(c);
+      setStatus('ジオコード完了: OK='+done+' MISS='+miss+'/'+total+' — JSONをダウンロードしてcommitしてください');
+      renderMylistItems();rebuildDataIndex();renderMarkers();
+      return;
+    }
+    var item=pending[i];
+    geocoder.geocode({address:item.name,region:'JP'},function(res,st){
+      if(st==='OK'&&res[0]){
+        var loc=res[0].geometry.location;
+        item.lat=loc.lat();item.lng=loc.lng();item.pid=res[0].place_id||'';done++;
+      }else{miss++;}
+      setStatus('ジオコード中: '+(i+1)+'/'+total+' (OK='+done+' MISS='+miss+')');
+      setTimeout(function(){next(i+1);},300);
+    });
+  }
+  next(0);
+}
+function downloadMylistJson(){
+  var data=mylistData.map(function(m){return{id:m.id,name:m.name,memo:m.memo||'',url:m.url||'',tag:m.tag||'',lat:m.lat||0,lng:m.lng||0,pid:m.pid||''};});
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='mylist_data.json';a.click();URL.revokeObjectURL(url);
 }
 
 // ===== DATA LOAD =====
@@ -650,7 +750,7 @@ function mergeData(foodsArr){
     });
     document.getElementById('moppy-count').textContent=cnt+'件'+(updated?'（'+updated+'）':'');
   }
-  mylistData.forEach(function(m){result.push(m);});
+  mylistData.forEach(function(m){if(m.lat&&m.lng)result.push(Object.assign({src:'mylist',award:'',score:'',sbgt:'',area:'',bgt_d:0,bgt_l:0,pid:''},m));});
   return result;
 }
 
@@ -678,8 +778,12 @@ function initMap(){
   map.addListener('click',function(){infoWin.close();});
   try{localStorage.removeItem('foods_f');}catch(e){}
   if(!isMaster){var ms=document.getElementById('mylist-sec');if(ms)ms.style.display='none';}
-  loadMylist();loadMemo();buildFilters();buildMylistGenreSelect();renderMylistItems();
-  loadMoppyData(function(){loadFoodsData();});
+  loadMemo();buildFilters();renderMylistItems();
+  if(isMaster){
+    var gb=document.getElementById('ml-geocode-btn'),eb=document.getElementById('ml-export-btn');
+    if(gb)gb.style.display='';if(eb)eb.style.display='';
+  }
+  loadMoppyData(function(){loadMylistData(function(){loadFoodsData();});});
   document.getElementById('locate-btn').addEventListener('click',function(){
     if(!navigator.geolocation)return;
     navigator.geolocation.getCurrentPosition(function(pos){map.setCenter({lat:pos.coords.latitude,lng:pos.coords.longitude});map.setZoom(14);});
