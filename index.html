@@ -548,10 +548,9 @@ function showInfo(item,marker){
     +(bgtStr?'<div class="iw-row">💰 '+esc(bgtStr)+'</div>':'')
     +(dupTabelogBgt?'<div class="iw-row" style="color:#e53935">💰 食べログ '+esc(dupTabelogBgt)+'</div>':'')
     +(item.area?'<div class="iw-row">📍 '+esc(item.area)+'</div>':'')
-    +(isMaster&&existingMemo?'<div class="iw-memo-existing" onclick="openMemoEdit(\''+esc(key)+'\')">📝 '+esc(existingMemo)+'</div>':'')
+    +(isMaster&&existingMemo?'<div class="iw-memo-existing" onclick="openEditPanel(\''+esc(key)+'\')">📝 '+esc(existingMemo)+'</div>':'')
     +'<div class="iw-links">'
-    +(isMaster?'<a class="iw-link" style="background:#29b6f6" href="#" onclick="openMemoEdit(\''+esc(key)+'\');return false">メモ</a>':'')
-    +'<a class="iw-link" style="background:#607d8b" href="#" onclick="openGmapEdit(\''+esc(key)+'\');return false">地図リンク</a>'
+    +(isMaster?'<a class="iw-link" style="background:#607d8b" href="#" onclick="openEditPanel(\''+esc(key)+'\');return false">編集</a>':'')
     +(item.ikyu_id?'<a class="iw-link" style="background:#795548" href="https://restaurant.ikyu.com/'+item.ikyu_id+'" target="_blank" rel="noopener">一休</a>':'')
     +'</div></div>';
   infoWin.setContent(html);infoWin.open(map,marker);
@@ -560,46 +559,34 @@ var gmapLinks={};
 function loadGmapLinks(){try{gmapLinks=JSON.parse(localStorage.getItem('foods_gmap_links')||'{}');}catch(e){gmapLinks={};}}
 function saveGmapLinks(){try{localStorage.setItem('foods_gmap_links',JSON.stringify(gmapLinks));}catch(e){}}
 
-function openGmapEdit(key){
+function openEditPanel(key){
   var iw=document.getElementById('iw-inner');if(!iw)return;
-  var existing=iw.querySelector('.iw-gmap-edit-wrap');
+  var existing=iw.querySelector('.iw-edit-panel');
   if(existing){existing.style.display='block';return;}
-  var cur=gmapLinks[key]||'';
-  var wrap=document.createElement('div');wrap.className='iw-gmap-edit-wrap';
-  wrap.style.cssText='margin-top:6px;display:flex;flex-direction:column;gap:4px';
-  wrap.innerHTML='<input class="iw-gmap-input" placeholder="GoogleマップのURL" value="'+esc(cur)+'" style="font-size:11px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;width:100%;box-sizing:border-box">'
-    +'<div style="display:flex;gap:4px">'
-    +'<button class="iw-memo-save" onclick="saveGmapLink(\''+esc(key)+'\')">保存</button>'
-    +'<span class="iw-memo-saved" id="gmap-saved-msg" style="display:none;font-size:11px;color:#43a047">保存済</span>'
+  var existingMemo=memoData[key]||'',existingGmap=gmapLinks[key]||'';
+  var wrap=document.createElement('div');wrap.className='iw-edit-panel';
+  wrap.style.cssText='margin-top:8px;display:flex;flex-direction:column;gap:5px;border-top:1px solid #eee;padding-top:8px';
+  wrap.innerHTML='<div style="font-size:10px;color:#888;font-weight:bold">📝 メモ</div>'
+    +'<textarea class="iw-memo-area" placeholder="メモを入力…">'+esc(existingMemo)+'</textarea>'
+    +'<div style="font-size:10px;color:#888;font-weight:bold;margin-top:2px">🗺 Google マップ URL</div>'
+    +'<input class="iw-gmap-input" placeholder="GoogleマップのURL" value="'+esc(existingGmap)+'" style="font-size:11px;padding:4px 6px;border:1px solid #ccc;border-radius:4px;width:100%;box-sizing:border-box">'
+    +'<div style="display:flex;gap:4px;align-items:center">'
+    +'<button class="iw-memo-save" onclick="saveEditPanel(\''+esc(key)+'\')">保存</button>'
+    +'<span class="iw-memo-saved" id="edit-saved-msg" style="display:none">保存済</span>'
     +'</div>';
   iw.appendChild(wrap);
 }
-function saveGmapLink(key){
-  var inp=document.querySelector('.iw-gmap-input');if(!inp)return;
-  var url=inp.value.trim();
-  if(url)gmapLinks[key]=url;else delete gmapLinks[key];
-  saveGmapLinks();
-  var msg=document.getElementById('gmap-saved-msg');if(msg){msg.style.display='inline';setTimeout(function(){msg.style.display='none';},2000);}
-  // 店名リンクを即座に更新
-  var nameA=document.querySelector('#iw-inner .iw-name a');if(nameA&&url)nameA.href=url;
-}
-
-function openMemoEdit(key){
-  var existing=memoData[key]||'';
-  var iw=document.getElementById('iw-inner');if(!iw)return;
-  var memoDiv=iw.querySelector('.iw-memo-area-wrap');
-  if(memoDiv){memoDiv.style.display='block';return;}
-  var wrap=document.createElement('div');wrap.className='iw-memo-area-wrap';
-  wrap.innerHTML='<textarea class="iw-memo-area" placeholder="メモを入力…">'+esc(existing)+'</textarea>'
-    +'<button class="iw-memo-save" onclick="saveMemo(\''+esc(key)+'\')">保存</button>'
-    +'<span class="iw-memo-saved" id="memo-saved-msg" style="display:none">保存済</span>';
-  iw.appendChild(wrap);
-}
-function saveMemo(key){
-  var ta=document.querySelector('.iw-memo-area');if(!ta)return;
-  memoData[key]=ta.value.trim();
-  try{localStorage.setItem('foods_memo',JSON.stringify(memoData));}catch(e){}
-  var msg=document.getElementById('memo-saved-msg');if(msg){msg.style.display='inline';setTimeout(function(){msg.style.display='none';},2000);}
+function saveEditPanel(key){
+  var ta=document.querySelector('.iw-memo-area');
+  if(ta){memoData[key]=ta.value.trim();try{localStorage.setItem('foods_memo',JSON.stringify(memoData));}catch(e){}}
+  var inp=document.querySelector('.iw-gmap-input');
+  if(inp){
+    var url=inp.value.trim();
+    if(url)gmapLinks[key]=url;else delete gmapLinks[key];
+    saveGmapLinks();
+    var nameA=document.querySelector('#iw-inner .iw-name a');if(nameA&&url)nameA.href=url;
+  }
+  var msg=document.getElementById('edit-saved-msg');if(msg){msg.style.display='inline';setTimeout(function(){msg.style.display='none';},2000);}
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 function setStatus(t){document.getElementById('status-bar').textContent=t;}
