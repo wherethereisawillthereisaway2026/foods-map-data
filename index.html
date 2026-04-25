@@ -474,7 +474,7 @@ function showInfo(item,marker){
     +'<span class="iw-src" style="background:'+color+'">'+(item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">'+esc(SRC_LABEL[item.src]||item.src)+'</a>':esc(SRC_LABEL[item.src]||item.src))+'</span>'
     +(item.dup&&item.dup.length>1?item.dup.filter(function(s){return s!==item.src;}).map(function(s){var u=dupUrls[s];return'<span class="iw-src" style="background:'+SRC_COLOR[s]+'">'+(u?'<a href="'+esc(u)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">'+SRC_LABEL[s]+'</a>':SRC_LABEL[s])+'</span>';}).join(' '):'')
     +'<div class="iw-name">'+nameHtml+'</div>'
-    +(item.award?'<div class="iw-row">🏆 '+esc(item.award)+'</div>':'')
+    +(item.award&&item.award!=='ガストロノミー'?'<div class="iw-row">🏆 '+esc(item.award)+'</div>':'')
     +(item.score?'<div class="iw-row">⭐ '+esc(item.score)+'</div>':'')
     +(item.genre&&item.src!=='tabelog'?'<div class="iw-row">🍽 '+esc(item.genre)+'</div>':'')
     +dupExtra
