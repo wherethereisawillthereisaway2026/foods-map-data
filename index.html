@@ -471,14 +471,18 @@ function makeDupSvg(srcs){
 }
 function makeMoppySvg(reward){
   var m=/(\d+)%/.exec(reward||''),pct=m?parseInt(m[1]):null,is100=pct===100;
-  var r=is100?18:14,size=r*2,label=pct?pct+'%':'?',fs=label.length>=4?r*0.52:r*0.62;
-  var color=is100?'#FF6B35':'#00b0a0';
-  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+size+'" height="'+size+'">'
-    +'<circle cx="'+r+'" cy="'+r+'" r="'+(r-1.5)+'" fill="'+color+'" stroke="#fff" stroke-width="2.5"/>'
-    +(is100?'<circle cx="'+r+'" cy="'+r+'" r="'+(r-5)+'" fill="none" stroke="rgba(255,255,255,0.5)" stroke-width="1.2"/>':'')
-    +'<text x="'+r+'" y="'+(r+fs*0.38)+'" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="'+fs+'" font-weight="bold" fill="#fff">'+label+'</text>'
+  var label=pct?pct+'%':'?';
+  var color=is100?'#e8440a':'#00897b';
+  var fs=is100?12:11,sw=2,rx=4,triH=7;
+  var pw=is100?46:label.length<=3?34:42,ph=is100?22:20;
+  var totalH=ph+triH,cx=pw/2;
+  var svg='<svg xmlns="http://www.w3.org/2000/svg" width="'+pw+'" height="'+totalH+'">'
+    +'<rect x="1" y="1" width="'+(pw-2)+'" height="'+(ph-2)+'" rx="'+rx+'" fill="'+color+'" stroke="#fff" stroke-width="'+sw+'"/>'
+    +(is100?'<rect x="4" y="4" width="'+(pw-8)+'" height="'+(ph-8)+'" rx="2" fill="none" stroke="rgba(255,255,255,0.6)" stroke-width="1"/>':'')
+    +'<polygon points="'+(cx-5)+','+(ph-1)+' '+(cx+5)+','+(ph-1)+' '+cx+','+totalH+'" fill="'+color+'"/>'
+    +'<text x="'+cx+'" y="'+(ph*0.58)+'" text-anchor="middle" dominant-baseline="middle" font-family="Arial,sans-serif" font-size="'+fs+'" font-weight="bold" fill="#fff">'+label+'</text>'
     +'</svg>';
-  return{url:'data:image/svg+xml,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(size,size),anchor:new google.maps.Point(r,r)};
+  return{url:'data:image/svg+xml,'+encodeURIComponent(svg),scaledSize:new google.maps.Size(pw,totalH),anchor:new google.maps.Point(cx,totalH)};
 }
 function createMarker(item){
   var icon;
