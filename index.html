@@ -270,17 +270,20 @@ function loadMylistData(cb){
   var localAdded=c.added||[];
   var localEdited=c.edited||{};
   var localDeleted=new Set(c.deleted||[]);
+  function applyEdited(m){var ov=localEdited[m.id];return ov?Object.assign({},m,ov):m;}
   fetch(MYLIST_CDN+'?t='+Date.now())
     .then(function(r){return r.json();})
     .then(function(data){
       mylistData=data
         .filter(function(m){return !localDeleted.has(m.id);})
-        .map(function(m){var ov=localEdited[m.id];return ov?Object.assign({},m,ov):m;});
-      localAdded.forEach(function(m){if(!localDeleted.has(m.id))mylistData.push(m);});
+        .map(applyEdited);
+      localAdded.forEach(function(m){if(!localDeleted.has(m.id))mylistData.push(applyEdited(m));});
       cb();
     })
     .catch(function(){
-      mylistData=localAdded.filter(function(m){return !localDeleted.has(m.id);});
+      mylistData=localAdded
+        .filter(function(m){return !localDeleted.has(m.id);})
+        .map(applyEdited);
       cb();
     });
 }
