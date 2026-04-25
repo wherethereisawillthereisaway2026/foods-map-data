@@ -194,6 +194,8 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     </div>
     <label>タグ</label>
     <input id="ml-tag" type="text" placeholder="例：デート・記念日・ランチ">
+    <label>Google MapリンクURL（任意）</label>
+    <input id="ml-gmap-url" type="text" placeholder="https://maps.google.com/...">
     <label>食べログURL（任意）</label>
     <input id="ml-tabelog-url" type="text" placeholder="https://tabelog.com/...">
     <label>メモ</label>
@@ -477,7 +479,7 @@ function createMarker(item){
   markerPool.set(getKey(item),marker);return marker;
 }
 function showMylistInfo(item,marker){
-  var gmUrl=item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:(item.lat&&item.lng)?'https://maps.google.com/?q='+item.lat+','+item.lng:'https://www.google.com/maps/search/'+encodeURIComponent(item.name);
+  var gmUrl=item.gmapUrl||(item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:(item.lat&&item.lng)?'https://maps.google.com/?q='+item.lat+','+item.lng:'https://www.google.com/maps/search/'+encodeURIComponent(item.name));
   var html='<div class="iw" id="iw-inner">'
     +'<span class="iw-src" style="background:#9c27b0">マイリスト</span>'
     +(item.tabelogUrl?'<span class="iw-src" style="background:#e53935"><a href="'+esc(item.tabelogUrl)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">食べログ</a></span>':'')
@@ -568,6 +570,7 @@ function openMylistModal(prefill){
   document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置取得済':'');
   document.getElementById('ml-addr-wrap').style.display='block';
   document.getElementById('ml-tag').value='';
+  document.getElementById('ml-gmap-url').value='';
   document.getElementById('ml-tabelog-url').value='';
   document.getElementById('ml-memo').value='';
   document.getElementById('ml-modal').classList.add('open');
@@ -582,6 +585,7 @@ function openMylistEdit(id){
   document.getElementById('ml-addr-wrap').style.display=(_mlLat?'none':'block');
   document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置済み':'未ジオコード');
   document.getElementById('ml-tag').value=item.tag||'';
+  document.getElementById('ml-gmap-url').value=item.gmapUrl||'';
   document.getElementById('ml-tabelog-url').value=item.tabelogUrl||'';
   document.getElementById('ml-memo').value=item.memo||'';
   document.getElementById('ml-modal').classList.add('open');
@@ -619,14 +623,15 @@ function saveMylistItem(){
   var memo=document.getElementById('ml-memo').value.trim();
   var tag=document.getElementById('ml-tag').value.trim();
   var tabelogUrl=document.getElementById('ml-tabelog-url').value.trim();
+  var gmapUrl=document.getElementById('ml-gmap-url').value.trim();
   var c=getLocalChanges();
 
   if(_editingId){
     // 編集モード
     var item=mylistData.find(function(m){return m.id===_editingId;});
-    if(item){item.memo=memo;item.tag=tag;item.tabelogUrl=tabelogUrl;}
+    if(item){item.memo=memo;item.tag=tag;item.tabelogUrl=tabelogUrl;item.gmapUrl=gmapUrl;}
     c.edited=c.edited||{};
-    c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},{memo:memo,tag:tag,tabelogUrl:tabelogUrl});
+    c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},{memo:memo,tag:tag,tabelogUrl:tabelogUrl,gmapUrl:gmapUrl});
     saveLocalChanges(c);
     mlGasPost({action:'editMylist',id:_editingId,memo:memo,tag:tag});
     var mk=markerPool.get('mylist|'+_editingId);if(mk)mk._item=item;
@@ -637,7 +642,7 @@ function saveMylistItem(){
   // 追加モード
   if(!_mlLat||!_mlLng){document.getElementById('ml-geo-status').textContent='住所を検索してください';return;}
   var id='ml_'+Date.now();
-  var item={src:'mylist',id:id,name:name,memo:memo,tag:tag,tabelogUrl:tabelogUrl,url:'',pid:'',award:'',score:'',sbgt:'',area:'',lat:_mlLat,lng:_mlLng,bgt_d:0,bgt_l:0};
+  var item={src:'mylist',id:id,name:name,memo:memo,tag:tag,tabelogUrl:tabelogUrl,gmapUrl:gmapUrl,url:'',pid:'',award:'',score:'',sbgt:'',area:'',lat:_mlLat,lng:_mlLng,bgt_d:0,bgt_l:0};
   c.added=c.added||[];
   c.added.push(item);
   saveLocalChanges(c);
@@ -724,7 +729,7 @@ function geocodeAllMylist(){
   next(0);
 }
 function downloadMylistJson(){
-  var data=mylistData.map(function(m){return{id:m.id,name:m.name,memo:m.memo||'',url:m.url||'',tag:m.tag||'',tabelogUrl:m.tabelogUrl||'',lat:m.lat||0,lng:m.lng||0,pid:m.pid||''};});
+  var data=mylistData.map(function(m){return{id:m.id,name:m.name,memo:m.memo||'',url:m.url||'',tag:m.tag||'',gmapUrl:m.gmapUrl||'',tabelogUrl:m.tabelogUrl||'',lat:m.lat||0,lng:m.lng||0,pid:m.pid||''};});
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='mylist_data.json';a.click();URL.revokeObjectURL(url);
 }
