@@ -194,6 +194,8 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     </div>
     <label>タグ</label>
     <input id="ml-tag" type="text" placeholder="例：デート・記念日・ランチ">
+    <label>食べログURL（任意）</label>
+    <input id="ml-tabelog-url" type="text" placeholder="https://tabelog.com/...">
     <label>メモ</label>
     <textarea id="ml-memo" placeholder="自由にメモを入力できます"></textarea>
     <div class="ml-btns">
@@ -472,16 +474,16 @@ function createMarker(item){
   markerPool.set(getKey(item),marker);return marker;
 }
 function showMylistInfo(item,marker){
-  var gmUrl=item.url||(item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:'https://maps.google.com/?q='+item.lat+','+item.lng);
+  var gmUrl=item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:(item.lat&&item.lng)?'https://maps.google.com/?q='+item.lat+','+item.lng:'https://www.google.com/maps/search/'+encodeURIComponent(item.name);
   var html='<div class="iw" id="iw-inner">'
     +'<span class="iw-src" style="background:#9c27b0">マイリスト</span>'
+    +(item.tabelogUrl?'<span class="iw-src" style="background:#e53935"><a href="'+esc(item.tabelogUrl)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">食べログ</a></span>':'')
     +'<div class="iw-name"><a href="'+esc(gmUrl)+'" target="_blank" rel="noopener">'+esc(item.name)+'</a></div>'
     +(item.tag?'<div class="iw-row">🏷 '+esc(item.tag)+'</div>':'')
     +(item.memo?'<div class="iw-row" style="white-space:pre-wrap">📝 '+esc(item.memo)+'</div>':'')
     +'<div class="iw-links">'
     +(isMaster?'<a class="iw-link" style="background:#9c27b0" href="#" onclick="openMylistEdit(\''+esc(item.id)+'\');return false">編集</a>':'')
-    +(isMaster?'<a class="iw-link" style="background:#e53935" href="#" onclick="confirmDeleteMylist(\''+esc(item.id)+'\');return false">削除</a>':'')
-    +'<a class="iw-link" style="background:#555" href="'+esc(gmUrl)+'" target="_blank" rel="noopener">地図</a>'
+    +(isMaster?'<a class="iw-link iw-del-btn" id="ml-del-'+esc(item.id)+'" style="background:#e53935" href="#" onclick="confirmDeleteMylist(\''+esc(item.id)+'\',this);return false">削除</a>':'')
     +'</div></div>';
   infoWin.setContent(html);infoWin.open(map,marker);
 }
@@ -563,6 +565,7 @@ function openMylistModal(prefill){
   document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置取得済':'');
   document.getElementById('ml-addr-wrap').style.display='block';
   document.getElementById('ml-tag').value='';
+  document.getElementById('ml-tabelog-url').value='';
   document.getElementById('ml-memo').value='';
   document.getElementById('ml-modal').classList.add('open');
 }
@@ -576,6 +579,7 @@ function openMylistEdit(id){
   document.getElementById('ml-addr-wrap').style.display=(_mlLat?'none':'block');
   document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置済み':'未ジオコード');
   document.getElementById('ml-tag').value=item.tag||'';
+  document.getElementById('ml-tabelog-url').value=item.tabelogUrl||'';
   document.getElementById('ml-memo').value=item.memo||'';
   document.getElementById('ml-modal').classList.add('open');
 }
@@ -611,14 +615,15 @@ function saveMylistItem(){
   if(!name){document.getElementById('ml-name').focus();return;}
   var memo=document.getElementById('ml-memo').value.trim();
   var tag=document.getElementById('ml-tag').value.trim();
+  var tabelogUrl=document.getElementById('ml-tabelog-url').value.trim();
   var c=getLocalChanges();
 
   if(_editingId){
     // 編集モード
     var item=mylistData.find(function(m){return m.id===_editingId;});
-    if(item){item.memo=memo;item.tag=tag;}
+    if(item){item.memo=memo;item.tag=tag;item.tabelogUrl=tabelogUrl;}
     c.edited=c.edited||{};
-    c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},{memo:memo,tag:tag});
+    c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},{memo:memo,tag:tag,tabelogUrl:tabelogUrl});
     saveLocalChanges(c);
     mlGasPost({action:'editMylist',id:_editingId,memo:memo,tag:tag});
     var mk=markerPool.get('mylist|'+_editingId);if(mk)mk._item=item;
@@ -629,7 +634,7 @@ function saveMylistItem(){
   // 追加モード
   if(!_mlLat||!_mlLng){document.getElementById('ml-geo-status').textContent='住所を検索してください';return;}
   var id='ml_'+Date.now();
-  var item={src:'mylist',id:id,name:name,memo:memo,tag:tag,url:'',pid:'',award:'',score:'',sbgt:'',area:'',lat:_mlLat,lng:_mlLng,bgt_d:0,bgt_l:0};
+  var item={src:'mylist',id:id,name:name,memo:memo,tag:tag,tabelogUrl:tabelogUrl,url:'',pid:'',award:'',score:'',sbgt:'',area:'',lat:_mlLat,lng:_mlLng,bgt_d:0,bgt_l:0};
   c.added=c.added||[];
   c.added.push(item);
   saveLocalChanges(c);
@@ -639,11 +644,25 @@ function saveMylistItem(){
   renderMylistItems();rebuildDataIndex();renderMarkers();
   closeMylistModal();
 }
-function confirmDeleteMylist(id){
-  var item=mylistData.find(function(m){return m.id===id;});
-  if(!item)return;
-  if(!confirm(item.name+' を削除しますか？'))return;
-  deleteMylistItem(id);
+var _mlDelTimer=null;
+var _mlDelPending=null;
+function confirmDeleteMylist(id,btn){
+  if(_mlDelPending===id){
+    clearTimeout(_mlDelTimer);_mlDelTimer=null;_mlDelPending=null;
+    deleteMylistItem(id);
+    return;
+  }
+  if(_mlDelPending&&_mlDelPending!==id){
+    var prev=document.getElementById('ml-del-'+_mlDelPending);
+    if(prev){prev.textContent='削除';prev.style.opacity='';}
+    clearTimeout(_mlDelTimer);
+  }
+  _mlDelPending=id;
+  if(btn){btn.textContent='確認？';btn.style.opacity='0.75';}
+  _mlDelTimer=setTimeout(function(){
+    _mlDelPending=null;_mlDelTimer=null;
+    if(btn){btn.textContent='削除';btn.style.opacity='';}
+  },4000);
 }
 function deleteMylistItem(id){
   var c=getLocalChanges();
@@ -668,7 +687,7 @@ function renderMylistItems(){
   geo.forEach(function(m){
     var row=document.createElement('div');row.className='ml-item';
     row.innerHTML='<span class="ml-item-name">'+esc(m.name)+(m.tag?'<span style="font-size:9px;color:#9c27b0;margin-left:4px">'+esc(m.tag)+'</span>':'')+'</span>';
-    if(isMaster){row.innerHTML+='<button class="ml-item-del" onclick="confirmDeleteMylist(\''+esc(m.id)+'\');event.stopPropagation()">✕</button>';}
+    if(isMaster){row.innerHTML+='<button class="ml-item-del" id="ml-del-'+esc(m.id)+'" onclick="confirmDeleteMylist(\''+esc(m.id)+'\',this);event.stopPropagation()">✕</button>';}
     row.addEventListener('click',function(){map.setCenter({lat:m.lat,lng:m.lng});map.setZoom(16);});
     el.appendChild(row);
   });
@@ -702,7 +721,7 @@ function geocodeAllMylist(){
   next(0);
 }
 function downloadMylistJson(){
-  var data=mylistData.map(function(m){return{id:m.id,name:m.name,memo:m.memo||'',url:m.url||'',tag:m.tag||'',lat:m.lat||0,lng:m.lng||0,pid:m.pid||''};});
+  var data=mylistData.map(function(m){return{id:m.id,name:m.name,memo:m.memo||'',url:m.url||'',tag:m.tag||'',tabelogUrl:m.tabelogUrl||'',lat:m.lat||0,lng:m.lng||0,pid:m.pid||''};});
   var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
   var url=URL.createObjectURL(blob);var a=document.createElement('a');a.href=url;a.download='mylist_data.json';a.click();URL.revokeObjectURL(url);
 }
