@@ -70,7 +70,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 #ml-geo-status{font-size:10px;color:#888;min-height:14px;margin-top:2px}
 .ml-btns{display:flex;gap:8px;margin-top:14px}
 .ml-btn{flex:1;border:none;border-radius:6px;padding:8px;font-size:12px;font-weight:700;cursor:pointer}
-.ml-btn.primary{background:#9c27b0;color:#fff}
+.ml-btn.primary{background:#1565c0;color:#fff}
 .ml-btn.cancel{background:#f0f0f0;color:#555}
 #mylist-items{margin-top:6px}
 .ml-item{padding:5px 4px;border-bottom:1px solid #f5f5f5;font-size:11px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
@@ -146,7 +146,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 
     <div class="sec" id="mylist-sec">
       <div class="sec-hd">
-        <span class="sec-title"><span class="sec-dot" style="background:#9c27b0"></span>マイリスト</span>
+        <span class="sec-title"><span class="sec-dot" style="background:#1565c0"></span>マイリスト</span>
         <button id="ml-pin-btn" class="sec-all" onclick="toggleMylistPin()">ピン表示</button>
       </div>
     </div>
@@ -263,7 +263,7 @@ var GOEI_GENRES  = ['フレンチ','イタリアン','日本料理','寿司','�
 var MICH_AWARDS  = ['ミシュラン 三つ星','ミシュラン 二つ星','ミシュラン 一つ星','ビブグルマン'];
 var MICH_AWARD_L = {'ミシュラン 三つ星':'★★★','ミシュラン 二つ星':'★★','ミシュラン 一つ星':'★','ビブグルマン':'Bib'};
 var MICH_BUDGETS = [{label:'¥',val:3000},{label:'¥¥',val:8000},{label:'¥¥¥',val:20000},{label:'¥¥¥¥',val:40000}];
-var SRC_COLOR = {tabelog:'#e53935',goeimillau:'#43a047',michelin:'#f9a825',moppy:'#00b0a0',fancrew:'#ff6f00',msr:'#7b1fa2',mylist:'#9c27b0'};
+var SRC_COLOR = {tabelog:'#e53935',goeimillau:'#43a047',michelin:'#f9a825',moppy:'#00b0a0',fancrew:'#ff6f00',msr:'#7b1fa2',mylist:'#1565c0'};
 var SRC_LABEL = {tabelog:'食べログ',goeimillau:'ゴ・エ・ミヨ',michelin:'ミシュラン',moppy:'Moppy',fancrew:'Fancrew',msr:'ミステリー',mylist:'マイリスト'};
 var BUDGET_RANGES_D = [
   {key:'d0', label:'不明',     min:0,     max:0},
@@ -479,7 +479,7 @@ function toggleMylistPin(){
   mylistPinVisible=!mylistPinVisible;
   var btn=document.getElementById('ml-pin-btn');
   btn.textContent=mylistPinVisible?'ピン非表示':'ピン表示';
-  btn.style.background=mylistPinVisible?'#9c27b0':'';
+  btn.style.background=mylistPinVisible?'#1565c0':'';
   btn.style.color=mylistPinVisible?'#fff':'';
   invalidateFilter();renderMarkers();
 }
@@ -606,13 +606,13 @@ function createMarker(item){
 function showMylistInfo(item,marker){
   var gmUrl=item.gmapUrl||(item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:(item.lat&&item.lng)?'https://maps.google.com/?q='+item.lat+','+item.lng:'https://www.google.com/maps/search/'+encodeURIComponent(item.name));
   var html='<div class="iw" id="iw-inner">'
-    +'<span class="iw-src" style="background:#9c27b0">マイリスト</span>'
+    +'<span class="iw-src" style="background:#1565c0">マイリスト</span>'
     +(item.tabelogUrl?'<span class="iw-src" style="background:#e53935"><a href="'+esc(item.tabelogUrl)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">食べログ</a></span>':'')
     +'<div class="iw-name"><a href="'+esc(gmUrl)+'" target="_blank" rel="noopener">'+esc(item.name)+'</a></div>'
     +(item.tag?'<div class="iw-row">🏷 '+esc(item.tag)+'</div>':'')
     +(item.memo?'<div class="iw-row" style="white-space:pre-wrap">📝 '+esc(item.memo)+'</div>':'')
     +'<div class="iw-links">'
-    +(isMaster?'<a class="iw-link" style="background:#9c27b0" href="#" onclick="openMylistEdit(\''+esc(item.id)+'\');return false">編集</a>':'')
+    +(isMaster?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistEdit(\''+esc(item.id)+'\');return false">編集</a>':'')
     +(isMaster?'<a class="iw-link iw-del-btn" id="ml-del-'+esc(item.id)+'" style="background:#e53935" href="#" onclick="confirmDeleteMylist(\''+esc(item.id)+'\',this);return false">削除</a>':'')
     +'</div></div>';
   infoWin.setContent(html);infoWin.open(map,marker);
@@ -844,7 +844,7 @@ function renderMylistItems(){
     el.appendChild(nogeoHdr);
     nogeo.forEach(function(m){
       var row=document.createElement('div');row.className='ml-item';row.style.opacity='0.65';
-      row.innerHTML='<span class="ml-item-name" style="color:#e65100">📍 '+esc(m.name)+(m.tag?'<span style="font-size:9px;color:#9c27b0;margin-left:4px">'+esc(m.tag)+'</span>':'')+'</span>';
+      row.innerHTML='<span class="ml-item-name" style="color:#e65100">📍 '+esc(m.name)+(m.tag?'<span style="font-size:9px;color:#1565c0;margin-left:4px">'+esc(m.tag)+'</span>':'')+'</span>';
       if(isMaster){row.innerHTML+='<button class="ml-item-del" onclick="confirmDeleteMylist(\''+esc(m.id)+'\',this);event.stopPropagation()">✕</button>';}
       row.addEventListener('click',function(){openMylistEdit(m.id);});
       el.appendChild(row);
@@ -852,7 +852,7 @@ function renderMylistItems(){
   }
   geo.forEach(function(m){
     var row=document.createElement('div');row.className='ml-item';
-    row.innerHTML='<span class="ml-item-name">'+esc(m.name)+(m.tag?'<span style="font-size:9px;color:#9c27b0;margin-left:4px">'+esc(m.tag)+'</span>':'')+'</span>';
+    row.innerHTML='<span class="ml-item-name">'+esc(m.name)+(m.tag?'<span style="font-size:9px;color:#1565c0;margin-left:4px">'+esc(m.tag)+'</span>':'')+'</span>';
     if(isMaster){row.innerHTML+='<button class="ml-item-del" id="ml-del-'+esc(m.id)+'" onclick="confirmDeleteMylist(\''+esc(m.id)+'\',this);event.stopPropagation()">✕</button>';}
     row.addEventListener('click',function(){map.setCenter({lat:m.lat,lng:m.lng});map.setZoom(16);});
     el.appendChild(row);
@@ -1026,9 +1026,9 @@ function initMap(){
           +'<div class="iw-name"><a href="'+esc(gmUrl)+'" target="_blank" rel="noopener">'+esc(place.name||'')+'</a></div>'
           +(place.formatted_address?'<div class="iw-row" style="font-size:11px;color:#888">'+esc(place.formatted_address)+'</div>':'')
           +'<div class="iw-links">'
-          +'<a class="iw-link" style="background:#9c27b0" href="#" onclick="openMylistModal(window._mlInfoPrefill);return false">＋ リスト</a>'
+          +'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistModal(window._mlInfoPrefill);return false">＋ リスト</a>'
           +'</div></div>';
-        var tmp=new google.maps.Marker({position:loc,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#9c27b0',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:8}});
+        var tmp=new google.maps.Marker({position:loc,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#1565c0',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:8}});
         infoWin.setContent(html);infoWin.open(map,tmp);
         infoWin.addListener('closeclick',function(){tmp.setMap(null);});
       });
@@ -1057,7 +1057,7 @@ function doSearch(){
     var item=found[0];
     map.setCenter({lat:item.lat,lng:item.lng});
     map.setZoom(16);
-    var tmp=new google.maps.Marker({position:{lat:item.lat,lng:item.lng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:SRC_COLOR[item.src]||'#9c27b0',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:10}});
+    var tmp=new google.maps.Marker({position:{lat:item.lat,lng:item.lng},map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:SRC_COLOR[item.src]||'#1565c0',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:10}});
     showInfo(item,tmp);
     infoWin.addListener('closeclick',function(){tmp.setMap(null);});
     if(found.length>1)setStatus(found.length+'件ヒット: '+found.map(function(d){return d.name;}).slice(0,5).join(' / '));
@@ -1072,7 +1072,7 @@ function doSearch(){
     var _geo={name:kw,address:addr,lat:loc.lat(),lng:loc.lng()};
     var html='<div class="iw"><div class="iw-name">'+esc(kw)+'</div><div class="iw-row">📍 '+esc(addr)+'</div>'
       +'<div class="iw-links">'
-      +(isMaster?'<a class="iw-link" style="background:#9c27b0" href="#" onclick="openMylistModal(window._lastGeo);return false">＋ マイリスト</a>':'')
+      +(isMaster?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistModal(window._lastGeo);return false">＋ マイリスト</a>':'')
       +'<a class="iw-link" style="background:#555" href="'+esc(gmUrl)+'" target="_blank" rel="noopener">Googleマップ</a>'
       +'</div></div>';
     window._lastGeo=_geo;
