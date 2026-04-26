@@ -156,9 +156,16 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         <span class="sec-title"><span class="sec-dot" style="background:#ff6f00"></span>Fancrew</span>
         <button id="fancrew-pin-btn" class="sec-all" onclick="toggleFancrewPin()">ピン表示</button>
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
+          <button id="fc-update-btn" onclick="handleFancrewUpdateClick(this)">🔄 全国データ更新</button>
           <span id="fancrew-count" style="font-size:11px;color:#aaa"></span>
           <button id="fancrew-toggle" class="sec-all" onclick="toggleFancrewList()" style="font-size:13px;padding:2px 8px">▼</button>
         </div>
+      </div>
+      <div id="fc-progress-wrap" style="display:none;margin-top:6px">
+        <div style="height:3px;background:#e0e0e0;border-radius:2px;overflow:hidden;margin-bottom:5px">
+          <div id="fc-progress-bar" style="height:100%;width:0%;background:#ff6f00;transition:width .4s"></div>
+        </div>
+        <ul id="fc-step-list" style="list-style:none;font-size:10px;color:#aaa"></ul>
       </div>
       <div id="fancrew-list" style="display:none;margin-top:6px"></div>
     </div>
@@ -220,7 +227,8 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 var API_KEY  = 'AIzaSyAMBPa_T_URVyJNn1lHnXjzDiEZoKPNPSw';
 var _t = ['gho_lFBnN9dg4yQEo00', 'QVKRnQVzoS8BNYY2ITSmL'];
 var GH_TOKEN = _t[0]+_t[1];
-var GH_REPO  = 'wherethereisawillthereisaway2026/moppy-scraper';
+var GH_REPO         = 'wherethereisawillthereisaway2026/moppy-scraper';
+var FANCREW_GH_REPO = 'wherethereisawillthereisaway2026/foods-map-data';
 var MOPPY_DATA_URL   = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/moppy-data.json';
 var FANCREW_DATA_URL = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/fancrew-data.json';
 var FOODS_GAS_URL  = 'https://script.google.com/macros/s/AKfycbzFhfWjjQripKM0_--JQpT1QRjy6Os6D4z4ukXqcnl8YU58Xb9PUOxvdXfaT0IHr8v1IQ/exec';
@@ -1030,6 +1038,52 @@ function toggleSidebar(){
 })();
 
 // ===== MOPPY UPDATE =====
+var FC_STEP_NAMES=['Set up job','Run actions/checkout@v4','Setup Python','Install dependencies','Run scraper','Commit fancrew-data.json'];
+var _fcConfPending=false,_fcConfTimer=null,fcPollTimer=null,fcCurrentRunId=null;
+function handleFancrewUpdateClick(btn){
+  if(btn.disabled)return;
+  if(_fcConfPending){clearTimeout(_fcConfTimer);_fcConfPending=false;btn.classList.remove('confirm');triggerFancrewScrape();}
+  else{_fcConfPending=true;btn.classList.add('confirm');btn.title='もう1回で実行';_fcConfTimer=setTimeout(function(){_fcConfPending=false;btn.classList.remove('confirm');btn.title='';},4000);}
+}
+function triggerFancrewScrape(){
+  var btn=document.getElementById('fc-update-btn');btn.disabled=true;
+  fetch('https://api.github.com/repos/'+FANCREW_GH_REPO+'/actions/workflows/fancrew-scrape.yml/dispatches',{method:'POST',headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({ref:'main'})})
+    .then(function(r){if(r.status===204)startFancrewProgress();else{btn.disabled=false;setStatus('トリガー失敗('+r.status+')');} })
+    .catch(function(){btn.disabled=false;setStatus('通信エラー');});
+}
+function startFancrewProgress(){
+  document.getElementById('fc-progress-wrap').style.display='block';
+  document.getElementById('fc-progress-bar').style.width='0%';
+  var startTime=Date.now(),attempts=0;fcCurrentRunId=null;
+  var ft=setInterval(function(){
+    attempts++;
+    fetch('https://api.github.com/repos/'+FANCREW_GH_REPO+'/actions/runs?event=workflow_dispatch&per_page=5',{headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json'}})
+      .then(function(r){return r.json();}).then(function(d){
+        var runs=d.workflow_runs||[];
+        for(var i=0;i<runs.length;i++){if(new Date(runs[i].created_at).getTime()>=startTime-8000){fcCurrentRunId=runs[i].id;clearInterval(ft);fcPollTimer=setInterval(pollFancrewSteps,8000);pollFancrewSteps();return;}}
+        if(attempts>6)clearInterval(ft);
+      }).catch(function(){});
+  },5000);
+}
+function pollFancrewSteps(){
+  if(!fcCurrentRunId)return;
+  fetch('https://api.github.com/repos/'+FANCREW_GH_REPO+'/actions/runs/'+fcCurrentRunId+'/jobs',{headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json'}})
+    .then(function(r){return r.json();}).then(function(d){
+      var job=(d.jobs||[])[0];if(!job)return;
+      var steps=(job.steps||[]).filter(function(s){return FC_STEP_NAMES.indexOf(s.name)!==-1;});
+      var done=steps.filter(function(s){return s.status==='completed';}).length;
+      document.getElementById('fc-progress-bar').style.width=Math.round(done/FC_STEP_NAMES.length*100)+'%';
+      var ul=document.getElementById('fc-step-list');ul.innerHTML='';
+      steps.forEach(function(s){var li=document.createElement('li');li.textContent=(s.status==='completed'?'✓ ':s.status==='in_progress'?'⟳ ':'· ')+s.name;ul.appendChild(li);});
+      if(job.status==='completed'){
+        clearInterval(fcPollTimer);
+        document.getElementById('fc-progress-wrap').style.display='none';
+        document.getElementById('fc-update-btn').disabled=false;
+        loadFancrewData(function(){allData=mergeData(allData.filter(function(d){return d.src!=='fancrew';}));rebuildDataIndex();renderMarkers();});
+        setStatus(job.conclusion==='success'?'Fancrew更新完了':'Fancrew更新失敗');
+      }
+    }).catch(function(){});
+}
 var STEP_NAMES=['Set up job','Run actions/checkout@v4','Checkout GAS project','Checkout foods-map-data','Setup Python','Install dependencies','Setup clasp','Run scraper','Commit GAS data','Commit moppy-data.json to foods-map-data','Deploy to GAS'];
 var _confPending=false,_confTimer=null,pollTimer=null,currentRunId=null;
 function handleUpdateClick(btn){

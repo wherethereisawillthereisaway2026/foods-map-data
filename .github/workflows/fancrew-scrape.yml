@@ -1,0 +1,35 @@
+name: Fancrew Scraper
+
+on:
+  workflow_dispatch: {}
+  schedule:
+    - cron: '0 19 * * *'  # 毎日JST 4時（UTC 19時）
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run actions/checkout@v4
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GH_TOKEN }}
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install -r fancrew_scraper/requirements.txt
+
+      - name: Run scraper
+        run: python fancrew_scraper/scraper.py
+
+      - name: Commit fancrew-data.json
+        run: |
+          git config user.email "actions@github.com"
+          git config user.name "GitHub Actions"
+          git add fancrew-data.json
+          git diff --staged --quiet || git commit -m "fancrew data update: $(TZ=Asia/Tokyo date '+%Y-%m-%d')"
+          git pull --rebase origin main
+          git push
