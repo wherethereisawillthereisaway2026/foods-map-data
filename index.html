@@ -615,10 +615,11 @@ function openMylistEdit(id){
   document.getElementById('ml-modal-title').textContent='マイリスト 編集';
   document.getElementById('ml-name').value=item.name;
   document.getElementById('ml-name').disabled=true;
-  document.getElementById('ml-addr-wrap').style.display=(_mlLat?'none':'block');
-  document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置済み':'未ジオコード');
+  document.getElementById('ml-addr').value='';
+  document.getElementById('ml-addr-wrap').style.display='block';
+  document.getElementById('ml-geo-status').textContent=(_mlLat?'✓ 位置済み':'未ジオコード（住所を入力→検索で更新）');
   document.getElementById('ml-tag').value=item.tag||'';
-  document.getElementById('ml-gmap-url').value=item.gmapUrl||'';
+  document.getElementById('ml-gmap-url').value=item.gmapUrl||item.url||'';
   document.getElementById('ml-tabelog-url').value=item.tabelogUrl||'';
   document.getElementById('ml-memo').value=item.memo||'';
   document.getElementById('ml-modal').classList.add('open');
@@ -662,11 +663,13 @@ function saveMylistItem(){
   if(_editingId){
     // 編集モード
     var item=mylistData.find(function(m){return m.id===_editingId;});
-    if(item){item.memo=memo;item.tag=tag;item.tabelogUrl=tabelogUrl;item.gmapUrl=gmapUrl;}
+    var editData={memo:memo,tag:tag,tabelogUrl:tabelogUrl,gmapUrl:gmapUrl};
+    if(_mlLat){editData.lat=_mlLat;editData.lng=_mlLng;}
+    if(item){Object.assign(item,editData);}
     c.edited=c.edited||{};
-    c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},{memo:memo,tag:tag,tabelogUrl:tabelogUrl,gmapUrl:gmapUrl});
+    c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},editData);
     saveLocalChanges(c);
-    mlGasPost({action:'editMylist',id:_editingId,memo:memo,tag:tag});
+    mlGasPost({action:'editMylist',id:_editingId,memo:memo,tag:tag,lat:_mlLat||'',lng:_mlLng||''});
     var mk=markerPool.get('mylist|'+_editingId);if(mk)mk._item=item;
     renderMylistItems();closeMylistModal();
     return;
