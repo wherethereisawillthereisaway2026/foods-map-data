@@ -493,6 +493,22 @@ function toggleMoppyPin(){
 }
 function getKey(item){return item.src==='mylist'?'mylist|'+item.id:item.src==='msr'?'msr|'+item.name+'|'+(item.area||''):item.src+'|'+(item.url||item.name);}
 
+function isSourceActive(src){
+  if(src==='tabelog')return fState.tabe.size>0;
+  if(src==='goeimillau')return fState.goei.size>0;
+  if(src==='michelin')return fState.mich_awards.size>0;
+  if(src==='moppy')return moppyPinVisible;
+  if(src==='fancrew')return fancrewPinVisible;
+  if(src==='msr')return msrPinVisible;
+  if(src==='mylist')return isMaster&&mylistPinVisible;
+  return false;
+}
+function getEffectiveDup(item){
+  if(!item.dup||item.dup.length<2)return null;
+  var ef=item.dup.filter(function(s){return s===item.src||isSourceActive(s);});
+  return ef.length>1?ef:null;
+}
+
 // ===== RENDER =====
 function renderMarkers(){
   if(!dataLoaded)return;
@@ -505,7 +521,17 @@ function renderMarkers(){
     if(item&&bounds.contains({lat:item.lat,lng:item.lng}))shouldShow.add(key);
   });
   markerPool.forEach(function(m,key){if(shouldShow.has(key)){if(!m.getMap())m.setMap(map);}else{if(m.getMap())m.setMap(null);}});
-  shouldShow.forEach(function(key){if(!markerPool.has(key)){var item=_dataIndex.get(key);if(item)createMarker(item);}});
+  shouldShow.forEach(function(key){
+    var item=_dataIndex.get(key);if(!item)return;
+    if(!markerPool.has(key)){createMarker(item);}
+    else if(item.dup&&item.dup.length>1){
+      var ef=getEffectiveDup(item);
+      var newIcon;
+      if(ef){newIcon=makeDupSvg(ef);}
+      else{var color=SRC_COLOR[item.src]||'#999',scale=(item.src==='michelin'&&item.award==='ミシュラン 三つ星')?11:(item.src==='michelin'&&item.award==='ミシュラン 二つ星')?10:8;newIcon={path:google.maps.SymbolPath.CIRCLE,fillColor:color,fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:scale};}
+      markerPool.get(key).setIcon(newIcon);
+    }
+  });
   var vis=0;markerPool.forEach(function(m){if(m.getMap())vis++;});
   setStatus(vis+'件表示中 / 全'+allData.length+'件');
 }
@@ -593,7 +619,8 @@ function makeMoppySvg(reward){
 }
 function createMarker(item){
   var icon;
-  if(item.dup&&item.dup.length>1){icon=makeDupSvg(item.dup);}
+  var ef=getEffectiveDup(item);
+  if(ef){icon=makeDupSvg(ef);}
   else if(item.src==='moppy'){icon=makeMoppySvg(item.award);}
   else if(item.src==='fancrew'){icon=makeFancrewSvg(item.award);}
   else if(item.src==='msr'){icon=makeMsrSvg(item.award);}
@@ -633,7 +660,7 @@ function showInfo(item,marker){
   var dupAdded={};
   var dupTabelogBgt='';
   if(item.dup&&item.dup.length>1){
-    var THRESH=0.0002;
+    var THRESH=0.0006;
     allData.forEach(function(d){
       if(d.src===item.src||Math.abs(d.lat-item.lat)>THRESH||Math.abs(d.lng-item.lng)>THRESH)return;
       if(!item.dup||item.dup.indexOf(d.src)===-1)return;
