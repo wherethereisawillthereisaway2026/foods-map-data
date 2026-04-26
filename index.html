@@ -147,15 +147,14 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     <div class="sec" id="mylist-sec">
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#9c27b0"></span>マイリスト</span>
-        <button id="ml-pin-btn" class="sec-all" onclick="toggleMylistPin()" style="background:#9c27b0;color:#fff">ピン表示</button>
+        <button id="ml-pin-btn" class="sec-all" onclick="toggleMylistPin()">ピン表示</button>
       </div>
-      <div id="mylist-items"></div>
     </div>
 
     <div class="sec">
       <div class="sec-hd" style="flex-wrap:wrap;gap:4px">
         <span class="sec-title"><span class="sec-dot" style="background:#00b0a0"></span>Moppy フクモニ</span>
-        <button id="moppy-pin-btn" class="sec-all" onclick="toggleMoppyPin()" style="background:#00b0a0;color:#fff">ピン表示</button>
+        <button id="moppy-pin-btn" class="sec-all" onclick="toggleMoppyPin()">ピン表示</button>
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           <button id="update-btn" onclick="handleUpdateClick(this)">🔄 全国データ更新</button>
           <span id="moppy-count" style="font-size:11px;color:#aaa"></span>
@@ -251,7 +250,7 @@ var allData = [], moppyData = null, map, infoWin;
 var markerPool = new Map();
 var dataLoaded = false;
 var moppyPinVisible = false;
-var mylistPinVisible = true;
+var mylistPinVisible = false;
 var mylistData = [];
 var memoData = {};
 var _mlLat = null, _mlLng = null, _editingId = null;
