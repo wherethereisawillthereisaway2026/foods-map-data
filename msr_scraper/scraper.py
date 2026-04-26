@@ -26,14 +26,24 @@ SLEEP_GEO   = 0.3
 
 def login() -> requests.Session:
     with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        page.goto(LOGON_URL)
+        browser = p.chromium.launch(
+            headless=True,
+            args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
+        )
+        ctx = browser.new_context(
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+            viewport={"width": 1280, "height": 800},
+        )
+        page = ctx.new_page()
+        # AutomationControlledフラグをJSで除去
+        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        page.goto(LOGON_URL, wait_until="networkidle", timeout=30000)
+        page.wait_for_selector('input[name="LogonID"]', timeout=20000)
         page.fill('input[name="LogonID"]', LOGIN_ID)
         page.fill('#Password', LOGIN_PW)
         page.get_by_role("button", name="モニターサイトへ ログイン").click()
-        page.wait_for_url("**/MSRP/Monitor/**", timeout=15000)
-        cookies = page.context.cookies()
+        page.wait_for_url("**/MSRP/Monitor/**", timeout=30000)
+        cookies = ctx.cookies()
         browser.close()
     s = requests.Session()
     s.headers.update(HEADERS)
