@@ -5,7 +5,7 @@ MSR (ミステリーショッピングリサーチ) 飲食モニター スクレ
 Usage: python scraper.py
 Output: msr-data.json
 """
-import json, os, re, sys, time, urllib.request, urllib.parse
+import base64, json, os, re, sys, time, urllib.request, urllib.parse
 from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
@@ -141,11 +141,13 @@ def main():
         lat, lng = geocode(s["name"], s["address"])
         if lat is None:
             continue
+        inv_decoded = base64.b64decode(s["inv_id"]).decode() if s["inv_id"] else ""
+        url = f"https://www2.ms-r.com/MSR/MonitorNew/MyPage/EntryInput.asp?InvitationID={inv_decoded}" if inv_decoded else "https://www2.ms-r.com/MSRP/Monitor/Search/Search.php"
         stores_out.append({
             "name": s["name"], "address": s["address"],
             "lat": lat, "lng": lng,
             "reward": s["reward"], "budget": "",
-            "url": "https://www2.ms-r.com/MSRP/Monitor/Search/Search.php",
+            "url": url,
         })
         if (i + 1) % 100 == 0:
             print(f"  geocode {i+1}/{len(unique)}", file=sys.stderr)
