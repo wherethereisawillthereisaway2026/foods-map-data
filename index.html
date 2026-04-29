@@ -160,7 +160,6 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           <button id="fc-update-btn" onclick="handleFancrewUpdateClick(this)">🔄 全国データ更新</button>
           <span id="fancrew-count" style="font-size:11px;color:#aaa"></span>
-          <button id="fancrew-toggle" class="sec-all" onclick="toggleFancrewList()" style="font-size:13px;padding:2px 8px">▼</button>
         </div>
       </div>
       <div id="fc-progress-wrap" style="display:none;margin-top:6px">
@@ -169,7 +168,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         </div>
         <ul id="fc-step-list" style="list-style:none;font-size:10px;color:#aaa"></ul>
       </div>
-      <div id="fancrew-list" style="display:none;margin-top:6px"></div>
+      <div id="fancrew-list" style="margin-top:6px"></div>
     </div>
 
     <div class="sec">
@@ -179,7 +178,6 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           <button id="update-btn" onclick="handleUpdateClick(this)">🔄 全国データ更新</button>
           <span id="moppy-count" style="font-size:11px;color:#aaa"></span>
-          <button id="moppy-toggle" class="sec-all" onclick="toggleMoppyList()" style="font-size:13px;padding:2px 8px">▼</button>
         </div>
       </div>
       <div id="progress-wrap" style="display:none;margin-top:6px">
@@ -188,7 +186,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         </div>
         <ul id="step-list" style="list-style:none;font-size:10px;color:#aaa"></ul>
       </div>
-      <div id="moppy-list" style="display:none;margin-top:6px"></div>
+      <div id="moppy-list" style="margin-top:6px"></div>
     </div>
 
     <div class="sec">
@@ -197,10 +195,9 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         <button id="msr-pin-btn" class="sec-all" onclick="toggleMsrPin()">ピン表示</button>
         <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
           <span id="msr-count" style="font-size:11px;color:#aaa"></span>
-          <button id="msr-toggle" class="sec-all" onclick="toggleMsrList()" style="font-size:13px;padding:2px 8px">▼</button>
         </div>
       </div>
-      <div id="msr-list" style="display:none;margin-top:6px"></div>
+      <div id="msr-list" style="margin-top:6px"></div>
     </div>
 
   </div>
@@ -258,8 +255,10 @@ var isMaster = (new URLSearchParams(location.search).get('m') === MASTER_KEY);
 var FOODS_CACHE_TTL = 86400000;
 var SHOW_ZOOM       = 10;
 
-var TABE_MAIN   = ['うどん','うなぎ','お好み焼き','すき焼き・しゃぶしゃぶ','そば','とんかつ','アジア・エスニック','イタリアン','カフェ','カレー','ステーキ','スペイン料理','ハンバーガー','パン','ピザ','フレンチ','ラーメン','中華料理','創作料理・イノベーティブ','天ぷら','寿司','居酒屋','日本料理','洋食','焼き鳥','焼肉','立ち飲み','食堂','餃子','鳥料理'];
-var TABE_SWEETS = ['アイス・ジェラート','スイーツ','バー','和菓子','喫茶店'];
+var TABE_MAIN1  = ['寿司','天ぷら','焼肉','焼き鳥','ステーキ','うどん','そば','鳥料理','うなぎ','お好み焼き','すき焼き・しゃぶしゃぶ','とんかつ','居酒屋','立ち飲み','餃子','カレー','ラーメン','ハンバーガー','パン','ピザ','洋食','食堂'];
+var TABE_MAIN2  = ['フレンチ','イタリアン','スペイン料理','アジア・エスニック','中華料理','日本料理','創作料理・イノベーティブ'];
+var TABE_MAIN   = TABE_MAIN1.concat(TABE_MAIN2);
+var TABE_SWEETS = ['アイス・ジェラート','スイーツ','バー','和菓子','カフェ'];
 var TABELOG_CATS = TABE_MAIN.concat(TABE_SWEETS);
 var TABE_LABELS  = {'すき焼き・しゃぶしゃぶ':'すき・しゃぶ','アイス・ジェラート':'アイス','アジア・エスニック':'アジア系','創作料理・イノベーティブ':'イノベ'};
 var GOEI_GENRES  = ['フレンチ','イタリアン','日本料理','寿司','イノベーティブ','中華','スペイン料理','天ぷら・とんかつ','アジア料理','その他洋食','居酒屋・焼鳥・焼肉','和菓子・スイーツ','カフェ・パン・バー','その他'];
@@ -293,6 +292,7 @@ var mylistPinVisible = false;
 var mylistData = [];
 var memoData = {};
 var _mlLat = null, _mlLng = null, _editingId = null;
+var _pendingInfoItem = null;
 var _dataIndex = new Map();
 var _filterSet = new Set();
 var _filterDirty = true;
@@ -347,13 +347,20 @@ function buildFilters() {
     sr.appendChild(b);
   });
   var tg=document.getElementById('tabe-grid');
-  TABE_MAIN.forEach(function(cat){
+  TABE_MAIN1.forEach(function(cat){
     var b=mkBtn(TABE_LABELS[cat]||cat,cat,'#e53935',false); b.title=cat;
     b.addEventListener('click',function(){toggleF('tabe',cat,b,'#e53935');}); tg.appendChild(b);
   });
-  var sep=document.createElement('div');
-  sep.style.cssText='grid-column:1/-1;border-top:1px dashed #ddd;margin:3px 0';
-  tg.appendChild(sep);
+  var sep1=document.createElement('div');
+  sep1.style.cssText='grid-column:1/-1;border-top:1px dashed #ddd;margin:3px 0';
+  tg.appendChild(sep1);
+  TABE_MAIN2.forEach(function(cat){
+    var b=mkBtn(TABE_LABELS[cat]||cat,cat,'#e53935',false); b.title=cat;
+    b.addEventListener('click',function(){toggleF('tabe',cat,b,'#e53935');}); tg.appendChild(b);
+  });
+  var sep2=document.createElement('div');
+  sep2.style.cssText='grid-column:1/-1;border-top:1px dashed #ddd;margin:3px 0';
+  tg.appendChild(sep2);
   TABE_SWEETS.forEach(function(cat){
     var b=mkBtn(TABE_LABELS[cat]||cat,cat,'#e53935',false); b.title=cat;
     b.addEventListener('click',function(){toggleF('tabe',cat,b,'#e53935');}); tg.appendChild(b);
@@ -481,7 +488,8 @@ function updateFilterCache(){
 }
 function shouldDisplay(item){
   if(item.src==='tabelog'){
-    if(fState.tabe.size===0||!fState.tabe.has(item.award))return false;
+    var _tabeAward=item.award==='喫茶店'?'カフェ':item.award;
+    if(fState.tabe.size===0||!fState.tabe.has(_tabeAward))return false;
     if(fState.tabe_min_score>0){var s=parseFloat(item.score);if(isNaN(s)||s<fState.tabe_min_score)return false;}
     return passBudgetFilter(item);
   }
@@ -664,6 +672,7 @@ function showMylistInfo(item,marker){
 }
 function showInfo(item,marker){
   if(item.src==='mylist'){showMylistInfo(item,marker);return;}
+  _pendingInfoItem=item;
   var color=SRC_COLOR[item.src]||'#999';
   var bgtStr=item.sbgt||(item.bgt_d?'夜 ¥'+Number(item.bgt_d).toLocaleString()+(item.bgt_l?' / 昼 ¥'+Number(item.bgt_l).toLocaleString():''):'');
   var key=getKey(item);
@@ -706,9 +715,15 @@ function showInfo(item,marker){
     +(isMaster&&existingMemo?'<div class="iw-memo-existing" onclick="openEditPanel(\''+esc(key)+'\')">📝 '+esc(existingMemo)+'</div>':'')
     +'<div class="iw-links">'
     +(isMaster?'<a class="iw-link" style="background:#607d8b" href="#" onclick="openEditPanel(\''+esc(key)+'\');return false">編集</a>':'')
+    +(item.src==='tabelog'?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistFromInfo();return false">マイリスト登録</a>':'')
     +(item.ikyu_id?'<a class="iw-link" style="background:#795548" href="https://restaurant.ikyu.com/'+item.ikyu_id+'" target="_blank" rel="noopener">一休</a>':'')
     +'</div></div>';
   infoWin.setContent(html);infoWin.open(map,marker);
+}
+function openMylistFromInfo(){
+  var it=_pendingInfoItem;if(!it)return;
+  openMylistModal({name:it.name,lat:it.lat,lng:it.lng,tabelogUrl:it.url||''});
+  infoWin.close();
 }
 var gmapLinks={};
 function loadGmapLinks(){try{gmapLinks=JSON.parse(localStorage.getItem('foods_gmap_links')||'{}');}catch(e){gmapLinks={};}}
@@ -759,7 +774,7 @@ function openMylistModal(prefill){
   document.getElementById('ml-addr-wrap').style.display='block';
   document.getElementById('ml-tag').value='';
   document.getElementById('ml-gmap-url').value='';
-  document.getElementById('ml-tabelog-url').value='';
+  document.getElementById('ml-tabelog-url').value=(prefill&&prefill.tabelogUrl)||'';
   document.getElementById('ml-memo').value='';
   document.getElementById('ml-modal').classList.add('open');
 }
