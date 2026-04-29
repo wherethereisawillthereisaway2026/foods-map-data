@@ -154,50 +154,27 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     </div>
 
     <div class="sec">
-      <div class="sec-hd" style="flex-wrap:wrap;gap:4px">
+      <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#ff6f00"></span>Fancrew</span>
+        <span id="fancrew-count" style="font-size:11px;color:#aaa"></span>
         <button id="fancrew-pin-btn" class="sec-all" onclick="toggleFancrewPin()">ピン表示</button>
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-          <button id="fc-update-btn" onclick="handleFancrewUpdateClick(this)">🔄 全国データ更新</button>
-          <span id="fancrew-count" style="font-size:11px;color:#aaa"></span>
-        </div>
       </div>
-      <div id="fc-progress-wrap" style="display:none;margin-top:6px">
-        <div style="height:3px;background:#e0e0e0;border-radius:2px;overflow:hidden;margin-bottom:5px">
-          <div id="fc-progress-bar" style="height:100%;width:0%;background:#ff6f00;transition:width .4s"></div>
-        </div>
-        <ul id="fc-step-list" style="list-style:none;font-size:10px;color:#aaa"></ul>
-      </div>
-      <div id="fancrew-list" style="margin-top:6px"></div>
     </div>
 
     <div class="sec">
-      <div class="sec-hd" style="flex-wrap:wrap;gap:4px">
-        <span class="sec-title"><span class="sec-dot" style="background:#00b0a0"></span>Moppy フクモニ</span>
-        <button id="moppy-pin-btn" class="sec-all" onclick="toggleMoppyPin()">ピン表示</button>
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-          <button id="update-btn" onclick="handleUpdateClick(this)">🔄 全国データ更新</button>
-          <span id="moppy-count" style="font-size:11px;color:#aaa"></span>
-        </div>
-      </div>
-      <div id="progress-wrap" style="display:none;margin-top:6px">
-        <div style="height:3px;background:#e0e0e0;border-radius:2px;overflow:hidden;margin-bottom:5px">
-          <div id="progress-bar" style="height:100%;width:0%;background:#00b0a0;transition:width .4s"></div>
-        </div>
-        <ul id="step-list" style="list-style:none;font-size:10px;color:#aaa"></ul>
-      </div>
-      <div id="moppy-list" style="margin-top:6px"></div>
-    </div>
-
-    <div class="sec">
-      <div class="sec-hd" style="flex-wrap:wrap;gap:4px">
+      <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#7b1fa2"></span>ミステリー</span>
+        <span id="msr-count" style="font-size:11px;color:#aaa"></span>
         <button id="msr-pin-btn" class="sec-all" onclick="toggleMsrPin()">ピン表示</button>
-        <div style="display:flex;align-items:center;gap:5px;flex-wrap:wrap">
-          <span id="msr-count" style="font-size:11px;color:#aaa"></span>
-        </div>
       </div>
-      <div id="msr-list" style="margin-top:6px"></div>
+    </div>
+
+    <div class="sec">
+      <div class="sec-hd">
+        <span class="sec-title"><span class="sec-dot" style="background:#00b0a0"></span>Moppy フクモニ</span>
+        <span id="moppy-count" style="font-size:11px;color:#aaa"></span>
+        <button id="moppy-pin-btn" class="sec-all" onclick="toggleMoppyPin()">ピン表示</button>
+      </div>
     </div>
 
   </div>
