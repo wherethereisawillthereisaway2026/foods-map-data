@@ -679,7 +679,7 @@ function showInfo(item,marker){
     });
   }
   var html='<div class="iw" id="iw-inner">'
-    +'<span class="iw-src" style="background:'+color+'">'+(item.url?'<a href="'+esc(item.url)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">'+esc(SRC_LABEL[item.src]||item.src)+'</a>':esc(SRC_LABEL[item.src]||item.src))+'</span>'
+    +'<span class="iw-src" style="background:'+color+'">'+(item.url?'<a href="'+esc(item.url)+'" target="'+(item.src==='msr'?'entryInput':'_blank')+'"'+(item.src==='msr'?'':' rel="noopener"')+' style="color:#fff;text-decoration:none">'+esc(SRC_LABEL[item.src]||item.src)+'</a>':esc(SRC_LABEL[item.src]||item.src))+'</span>'
     +(item.dup&&item.dup.length>1?item.dup.filter(function(s){return s!==item.src&&dupUrls[s];}).map(function(s){var u=dupUrls[s];return'<span class="iw-src" style="background:'+SRC_COLOR[s]+'"><a href="'+esc(u)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">'+SRC_LABEL[s]+'</a></span>';}).join(' '):'')
     +'<div class="iw-name">'+nameHtml+'</div>'
     +(item.award&&item.award!=='ガストロノミー'?'<div class="iw-row">🏆 '+esc(item.award)+'</div>':'')
@@ -695,7 +695,7 @@ function showInfo(item,marker){
     +(item.src==='tabelog'?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistFromInfo();return false">マイリスト登録</a>':'')
     +(item.ikyu_id?'<a class="iw-link" style="background:#795548" href="https://restaurant.ikyu.com/'+item.ikyu_id+'" target="_blank" rel="noopener">一休</a>':'')
     +'</div>'
-    +(item.src==='msr'&&item.url?'<div style="font-size:11px;color:#999;margin-top:4px">⚠ <a href="https://ms-r.com" target="_blank" rel="noopener" style="color:#7b1fa2">ms-r.com</a> へのログインが必要です</div>':'')
+    +(item.src==='msr'&&item.url?'<div style="font-size:11px;color:#999;margin-top:4px">⚠ ms-r.com にログイン後にクリックしてください</div>':'')
     +'</div>';
   infoWin.setContent(html);infoWin.open(map,marker);
 }
