@@ -50,10 +50,15 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 .iw-links{display:flex;gap:5px;margin-top:8px}
 .iw-link{flex:1;display:block;text-align:center;padding:6px 4px;border-radius:5px;color:#fff;text-decoration:none;font-size:11px;font-weight:600}
 
-#update-btn{font-size:12px;background:#00b0a0;color:#fff;border:none;border-radius:5px;padding:5px 10px;cursor:pointer}
-#update-btn:hover{background:#009080}
-#update-btn.confirm{background:#e53935}
-#update-btn:disabled{opacity:.4;cursor:default}
+#update-btn,#fc-update-btn{font-size:14px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:5px;padding:4px 7px;cursor:pointer;flex-shrink:0}
+#update-btn:hover,#fc-update-btn:hover{background:rgba(255,255,255,.28)}
+#update-btn.confirm,#fc-update-btn.confirm{background:#e53935}
+#update-btn:disabled,#fc-update-btn:disabled{opacity:.4;cursor:default}
+.progress-area{padding:4px 8px 6px;border-top:1px solid #f0f0f0}
+.progress-bar-wrap{background:#e0e0e0;border-radius:3px;height:4px;margin:4px 0}
+.progress-bar-fill{background:#00b0a0;height:4px;border-radius:3px;transition:width .4s}
+.fc-bar-fill{background:#ff6f00}
+.step-list{list-style:none;font-size:10px;color:#777;margin-top:3px;padding:0}
 
 .iw-name a{color:inherit;text-decoration:none}
 .iw-name a:hover{text-decoration:underline}
@@ -149,15 +154,20 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     <div class="sec" id="mylist-sec">
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#1565c0"></span>マイリスト</span>
-        <button id="ml-pin-btn" class="sec-all" onclick="toggleMylistPin()">ピン表示</button>
+        <button id="ml-pin-btn" class="sec-all" onclick="toggleMylistPin()" title="ピン表示">📍</button>
       </div>
     </div>
 
     <div class="sec">
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#ff6f00"></span>Fancrew</span>
-        <span id="fancrew-count" style="font-size:11px;color:#aaa"></span>
-        <button id="fancrew-pin-btn" class="sec-all" onclick="toggleFancrewPin()">ピン表示</button>
+        <span id="fancrew-count" style="font-size:11px;color:#aaa;flex:1"></span>
+        <button id="fancrew-pin-btn" class="sec-all" onclick="toggleFancrewPin()" title="ピン表示">📍</button>
+        <button id="fc-update-btn" class="tb-btn" style="font-size:13px;padding:3px 6px;margin-left:3px" onclick="handleFancrewUpdateClick(this)" title="Fancrewデータ更新">🔄</button>
+      </div>
+      <div id="fc-progress-wrap" class="progress-area" style="display:none">
+        <div class="progress-bar-wrap"><div id="fc-progress-bar" class="progress-bar-fill fc-bar-fill" style="width:0%"></div></div>
+        <ul id="fc-step-list" class="step-list"></ul>
       </div>
     </div>
 
@@ -165,15 +175,20 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#7b1fa2"></span>ミステリー</span>
         <span id="msr-count" style="font-size:11px;color:#aaa"></span>
-        <button id="msr-pin-btn" class="sec-all" onclick="toggleMsrPin()">ピン表示</button>
+        <button id="msr-pin-btn" class="sec-all" onclick="toggleMsrPin()" title="ピン表示">📍</button>
       </div>
     </div>
 
     <div class="sec">
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#00b0a0"></span>Moppy</span>
-        <span id="moppy-count" style="font-size:11px;color:#aaa"></span>
-        <button id="moppy-pin-btn" class="sec-all" onclick="toggleMoppyPin()">ピン表示</button>
+        <span id="moppy-count" style="font-size:11px;color:#aaa;flex:1"></span>
+        <button id="moppy-pin-btn" class="sec-all" onclick="toggleMoppyPin()" title="ピン表示">📍</button>
+        <button id="update-btn" class="tb-btn" style="font-size:13px;padding:3px 6px;margin-left:3px" onclick="handleUpdateClick(this)" title="Moppyデータ更新">🔄</button>
+      </div>
+      <div id="progress-wrap" class="progress-area" style="display:none">
+        <div class="progress-bar-wrap"><div id="progress-bar" class="progress-bar-fill" style="width:0%"></div></div>
+        <ul id="step-list" class="step-list"></ul>
       </div>
     </div>
 
@@ -481,7 +496,6 @@ function shouldDisplay(item){
 function toggleMylistPin(){
   mylistPinVisible=!mylistPinVisible;
   var btn=document.getElementById('ml-pin-btn');
-  btn.textContent=mylistPinVisible?'ピン非表示':'ピン表示';
   btn.style.background=mylistPinVisible?'#1565c0':'';
   btn.style.color=mylistPinVisible?'#fff':'';
   invalidateFilter();renderMarkers();
@@ -489,7 +503,6 @@ function toggleMylistPin(){
 function toggleMoppyPin(){
   moppyPinVisible=!moppyPinVisible;
   var btn=document.getElementById('moppy-pin-btn');
-  btn.textContent=moppyPinVisible?'ピン非表示':'ピン表示';
   btn.style.background=moppyPinVisible?'#00b0a0':'';
   btn.style.color=moppyPinVisible?'#fff':'';
   invalidateFilter();renderMarkers();
@@ -553,7 +566,6 @@ function makeDupSvg(srcs){
 function toggleFancrewPin(){
   fancrewPinVisible=!fancrewPinVisible;
   var btn=document.getElementById('fancrew-pin-btn');
-  btn.textContent=fancrewPinVisible?'ピン非表示':'ピン表示';
   btn.style.background=fancrewPinVisible?'#ff6f00':'';
   btn.style.color=fancrewPinVisible?'#fff':'';
   invalidateFilter();renderMarkers();
@@ -561,7 +573,6 @@ function toggleFancrewPin(){
 function toggleMsrPin(){
   msrPinVisible=!msrPinVisible;
   var btn=document.getElementById('msr-pin-btn');
-  btn.textContent=msrPinVisible?'ピン非表示':'ピン表示';
   btn.style.background=msrPinVisible?'#7b1fa2':'';
   btn.style.color=msrPinVisible?'#fff':'';
   invalidateFilter();renderMarkers();
@@ -1169,8 +1180,8 @@ function pollFancrewSteps(){
         clearInterval(fcPollTimer);
         document.getElementById('fc-progress-wrap').style.display='none';
         document.getElementById('fc-update-btn').disabled=false;
-        loadFancrewData(function(){allData=mergeData(allData.filter(function(d){return d.src!=='fancrew';}));rebuildDataIndex();renderMarkers();});
-        setStatus(job.conclusion==='success'?'Fancrew更新完了':'Fancrew更新失敗');
+        if(job.conclusion==='success'){setStatus('Fancrew更新完了 — 3秒後に再読み込み');setTimeout(function(){location.reload();},3000);}
+        else{loadFancrewData(function(){allData=mergeData(allData.filter(function(d){return d.src!=='fancrew';}));rebuildDataIndex();renderMarkers();});setStatus('Fancrew更新失敗');}
       }
     }).catch(function(){});
 }
@@ -1215,8 +1226,8 @@ function pollSteps(){
         clearInterval(pollTimer);
         document.getElementById('progress-wrap').style.display='none';
         document.getElementById('update-btn').disabled=false;
-        loadMoppyData(function(){allData=mergeData(allData.filter(function(d){return d.src!=='moppy';}));rebuildDataIndex();renderMarkers();});
-        setStatus(job.conclusion==='success'?'Moppy更新完了':'Moppy更新失敗');
+        if(job.conclusion==='success'){setStatus('Moppy更新完了 — 3秒後に再読み込み');setTimeout(function(){location.reload();},3000);}
+        else{loadMoppyData(function(){allData=mergeData(allData.filter(function(d){return d.src!=='moppy';}));rebuildDataIndex();renderMarkers();});setStatus('Moppy更新失敗');}
       }
     }).catch(function(){});
 }
