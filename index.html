@@ -146,10 +146,14 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         <span class="sec-title"><span class="sec-dot" style="background:#f9a825"></span>ミシュラン</span>
         <button class="sec-all" onclick="srcAll('michelin')">全選択</button>
       </div>
-      <div class="sec-sub">アワード</div>
-      <div class="fgrid4" id="mich-award-row" style="margin-bottom:6px"></div>
-      <div class="sec-sub">予算</div>
-      <div class="fgrid4" id="mich-budget-row"></div>
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <span class="sec-sub" style="margin:0;flex-shrink:0">アワード</span>
+        <div class="fgrid4" id="mich-award-row" style="flex:1"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px">
+        <span class="sec-sub" style="margin:0;flex-shrink:0">予算</span>
+        <div class="fgrid4" id="mich-budget-row" style="flex:1"></div>
+      </div>
     </div>
 
     <div class="sec" id="mylist-sec">
