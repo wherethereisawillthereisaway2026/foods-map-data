@@ -19,26 +19,27 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 .tb-btn{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:5px;padding:6px 8px;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .tb-btn:hover{background:rgba(255,255,255,.28)}
 
-#status-bar{padding:5px 10px;font-size:11px;color:#777;border-bottom:1px solid #f0f0f0;flex-shrink:0;min-height:24px}
+#status-bar{padding:5px 10px;font-size:12px;color:#777;border-bottom:1px solid #f0f0f0;flex-shrink:0;min-height:24px}
 #budget-bar{padding:5px 10px 6px;border-bottom:1px solid #f0f0f0;flex-shrink:0;background:#fafafa}
-#budget-bar .blabel{font-size:10px;color:#999;margin-bottom:3px}
+#budget-bar .blabel{font-size:11px;color:#999;margin-bottom:3px}
 #budget-bar .frow{gap:3px}
 
 #sb-scroll{flex:1;overflow-y:auto;overflow-x:hidden}
 .sec{border-bottom:2px solid #eee;padding:8px 8px 10px}
 .sec-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-.sec-title{font-size:12px;font-weight:700;color:#333;display:flex;align-items:center;gap:5px}
+.sec-title{font-size:13px;font-weight:700;color:#333;display:flex;align-items:center;gap:5px}
 .sec-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
-.sec-all{font-size:10px;background:#f0f0f0;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;color:#555}
+.sec-all{font-size:11px;background:#f0f0f0;border:none;border-radius:4px;padding:2px 7px;cursor:pointer;color:#555}
 .sec-all:hover{background:#ddd}
 
 .fgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:2px}
+.fgrid4{display:grid;grid-template-columns:repeat(4,1fr);gap:2px}
 .frow{display:flex;flex-wrap:wrap;gap:3px}
-.fbtn{font-size:10px;padding:3px 4px;border:1.5px solid #ddd;border-radius:4px;cursor:pointer;background:#fff;color:#666;text-align:center;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .15s;max-width:100%}
+.fbtn{font-size:11px;padding:3px 4px;border:1.5px solid #ddd;border-radius:4px;cursor:pointer;background:#fff;color:#666;text-align:center;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:all .15s;max-width:100%}
 .fbtn.on{color:#fff;border-color:transparent}
 .fbtn:hover{opacity:.8}
 
-.sec-sub{font-size:10px;color:#999;margin:5px 0 3px;font-weight:600}
+.sec-sub{font-size:11px;color:#999;margin:5px 0 3px;font-weight:600}
 
 #map{flex:1}
 #handle{display:none}
@@ -81,9 +82,9 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 .ml-btn.primary{background:#1565c0;color:#fff}
 .ml-btn.cancel{background:#f0f0f0;color:#555}
 #mylist-items{margin-top:6px}
-.ml-item{padding:5px 4px;border-bottom:1px solid #f5f5f5;font-size:11px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
+.ml-item{padding:5px 4px;border-bottom:1px solid #f5f5f5;font-size:12px;display:flex;justify-content:space-between;align-items:center;cursor:pointer}
 .ml-item-name{font-weight:600;color:#1a1a1a;flex:1}
-.ml-item-del{font-size:10px;color:#e53935;background:none;border:none;cursor:pointer;padding:2px 4px;flex-shrink:0}
+.ml-item-del{font-size:11px;color:#e53935;background:none;border:none;cursor:pointer;padding:2px 4px;flex-shrink:0}
 
 @keyframes spin{to{transform:rotate(360deg)}}
 
@@ -113,11 +114,11 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
   <div id="budget-bar">
     <div class="blabel">💰 予算フィルター（全ソース横断）</div>
     <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
-      <span style="font-size:10px;color:#888;flex-shrink:0">🌙夜</span>
+      <span style="font-size:11px;color:#888;flex-shrink:0">🌙夜</span>
       <div class="frow" id="budget-dinner-row" style="flex:1"></div>
     </div>
     <div style="display:flex;align-items:center;gap:3px">
-      <span style="font-size:10px;color:#888;flex-shrink:0">☀️昼</span>
+      <span style="font-size:11px;color:#888;flex-shrink:0">☀️昼</span>
       <div class="frow" id="budget-lunch-row" style="flex:1"></div>
     </div>
   </div>
@@ -146,9 +147,9 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
         <button class="sec-all" onclick="srcAll('michelin')">全選択</button>
       </div>
       <div class="sec-sub">アワード</div>
-      <div class="frow" id="mich-award-row" style="margin-bottom:6px"></div>
+      <div class="fgrid4" id="mich-award-row" style="margin-bottom:6px"></div>
       <div class="sec-sub">予算</div>
-      <div class="frow" id="mich-budget-row"></div>
+      <div class="fgrid4" id="mich-budget-row"></div>
     </div>
 
     <div class="sec" id="mylist-sec">
