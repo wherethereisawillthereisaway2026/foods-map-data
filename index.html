@@ -708,7 +708,7 @@ function showInfo(item,marker){
     +(isMaster&&existingMemo?'<div class="iw-memo-existing" onclick="openEditPanel(\''+esc(key)+'\')">📝 '+esc(existingMemo)+'</div>':'')
     +'<div class="iw-links">'
     +(isMaster?'<a class="iw-link" style="background:#607d8b" href="#" onclick="openEditPanel(\''+esc(key)+'\');return false">編集</a>':'')
-    +(item.src==='tabelog'?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistFromInfo();return false">マイリスト登録</a>':'')
+    +(isMaster&&item.src==='tabelog'?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistFromInfo();return false">マイリスト登録</a>':'')
     +(item.ikyu_id?'<a class="iw-link" style="background:#795548" href="https://restaurant.ikyu.com/'+item.ikyu_id+'" target="_blank" rel="noopener">一休</a>':'')
     +'</div>'
     +(item.src==='msr'&&item.url?'<div style="font-size:11px;color:#999;margin-top:4px">⚠ ms-r.com にログイン後にクリックしてください</div>':'')
@@ -1061,7 +1061,7 @@ function initMap(){
           +'<div class="iw-name"><a href="'+esc(gmUrl)+'" target="_blank" rel="noopener">'+esc(place.name||'')+'</a></div>'
           +(place.formatted_address?'<div class="iw-row" style="font-size:11px;color:#888">'+esc(place.formatted_address)+'</div>':'')
           +'<div class="iw-links">'
-          +'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistModal(window._mlInfoPrefill);return false">＋ リスト</a>'
+          +(isMaster?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistModal(window._mlInfoPrefill);return false">＋ リスト</a>':'')
           +'</div></div>';
         var tmp=new google.maps.Marker({position:loc,map:map,icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#1565c0',fillOpacity:1,strokeColor:'#fff',strokeWeight:2,scale:8}});
         infoWin.setContent(html);infoWin.open(map,tmp);
