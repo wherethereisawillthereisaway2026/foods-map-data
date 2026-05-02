@@ -20,7 +20,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 .tb-btn:hover{background:rgba(255,255,255,.28)}
 
 #status-bar{padding:5px 10px;font-size:12px;color:#777;border-bottom:1px solid #f0f0f0;flex-shrink:0;min-height:24px}
-#budget-bar{padding:5px 10px 6px;border-bottom:1px solid #f0f0f0;flex-shrink:0;background:#fafafa}
+#budget-bar{padding:5px 10px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa}
 #budget-bar .blabel{font-size:11px;color:#999;margin-bottom:3px}
 #budget-bar .frow{gap:3px}
 
@@ -111,6 +111,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     <button class="tb-btn" id="select-all-btn" onclick="selectAll()" title="全選択／全解除">全選択</button>
   </div>
   <div id="status-bar">読み込み中...</div>
+  <div id="sb-scroll">
   <div id="budget-bar">
     <div class="blabel">💰 予算フィルター（全ソース横断）</div>
     <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
@@ -122,7 +123,6 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
       <div class="frow" id="budget-lunch-row" style="flex:1"></div>
     </div>
   </div>
-  <div id="sb-scroll">
 
     <div class="sec">
       <div class="sec-hd">
