@@ -712,7 +712,7 @@ function showInfo(item,marker){
     +(isMaster&&item.src==='tabelog'?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistFromInfo();return false">マイリスト登録</a>':'')
     +(item.ikyu_id?'<a class="iw-link" style="background:#795548" href="https://restaurant.ikyu.com/'+item.ikyu_id+'" target="_blank" rel="noopener">一休</a>':'')
     +'</div>'
-    +(item.src==='msr'&&item.url?'<div style="font-size:11px;color:#999;margin-top:4px">⚠ ms-r.com にログイン後にクリックしてください</div>':'')
+    +(item.src==='msr'&&item.url?'<div style="font-size:11px;color:#999;margin-top:4px">⚠ <a href="https://ms-r.com/login" target="_blank" rel="noopener" style="color:#999">ms-r.com にログイン後</a>にクリックしてください</div>':'')
     +'</div>';
   infoWin.setContent(html);infoWin.open(map,marker);
 }
