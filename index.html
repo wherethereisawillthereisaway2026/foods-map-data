@@ -92,11 +92,11 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 @media(max-width:600px){
   body{display:block}
   #map{position:fixed;inset:0;width:100%;height:100%}
-  #sb{position:fixed;bottom:0;left:0;right:0;width:100%!important;height:40vh;border-right:none;border-radius:12px 12px 0 0;box-shadow:0 -3px 16px rgba(0,0,0,.15);z-index:1000;transition:height .3s}
+  #sb{position:fixed;bottom:0;left:0;right:0;width:100%!important;height:50vh;border-right:none;border-radius:12px 12px 0 0;box-shadow:0 -3px 16px rgba(0,0,0,.15);z-index:1000;transition:height .3s}
   #sb.sh-collapsed{height:50px}
   #sb.sh-full{height:calc(100vh - 20px)}
-  #handle{display:flex!important;justify-content:center;padding:9px 0 5px;cursor:pointer;flex-shrink:0;touch-action:none}
-  #handle::before{content:'';width:36px;height:4px;background:#ccc;border-radius:2px;display:block}
+  #handle{display:none!important}
+  #mobile-fold-btn{display:inline-block!important}
   #collapse-btn{display:none!important}
 }
 </style>
@@ -106,10 +106,11 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 <div id="sb">
   <div id="handle"></div>
   <div id="topbar">
-    <button class="tb-btn" id="locate-btn" title="現在地">📍</button>
+    <button class="tb-btn" id="locate-btn" title="現在地">📍現在地</button>
     <input type="text" id="search-inp" placeholder="エリア検索" onkeypress="if(event.key==='Enter')doSearch()">
     <button class="tb-btn" onclick="doSearch()">🔍</button>
-    <button class="tb-btn" id="select-all-btn" onclick="selectAll()" title="全選択／全解除">全選択</button>
+    <button class="tb-btn" id="select-all-btn" onclick="selectAll()" title="全選択／全解除" style="min-width:3em;text-align:center;">全選択</button>
+    <button class="tb-btn" id="mobile-fold-btn" onclick="toggleSidebar()" style="min-width:3em;text-align:center;display:none;">▽</button>
   </div>
   <div id="status-bar">読み込み中...</div>
   <div id="sb-scroll">
@@ -1120,9 +1121,15 @@ function doSearch(){
 // ===== SIDEBAR =====
 var _sbCollapsed=false;
 function toggleSidebar(){
-  if(window.innerWidth<=600)return;
+  var sb=document.getElementById('sb');
+  if(window.innerWidth<=600){
+    var isCollapsed=sb.classList.contains('sh-collapsed');
+    sb.className=sb.className.replace(/\s*sh-\S+/g,'')+(isCollapsed?'':' sh-collapsed');
+    document.getElementById('mobile-fold-btn').textContent=isCollapsed?'▽':'△';
+    return;
+  }
   _sbCollapsed=!_sbCollapsed;
-  document.getElementById('sb').classList.toggle('collapsed',_sbCollapsed);
+  sb.classList.toggle('collapsed',_sbCollapsed);
   var btn=document.getElementById('collapse-btn');
   btn.textContent=_sbCollapsed?'▶':'◀';
   btn.style.left=_sbCollapsed?'0':'345px';
