@@ -652,7 +652,7 @@ function createMarker(item){
   markerPool.set(getKey(item),marker);return marker;
 }
 function showMylistInfo(item,marker){
-  var gmUrl=item.gmapUrl||(item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:(item.lat&&item.lng)?'https://maps.google.com/?q='+item.lat+','+item.lng:'https://www.google.com/maps/search/'+encodeURIComponent(item.name));
+  var gmUrl=item.gmapUrl||((item.lat&&item.lng)?'https://www.google.com/maps/place/'+encodeURIComponent(item.name)+'/@'+item.lat+','+item.lng+',17z':item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:'https://www.google.com/maps/search/'+encodeURIComponent(item.name));
   var html='<div class="iw" id="iw-inner">'
     +'<span class="iw-src" style="background:#1565c0">マイリスト</span>'
     +(item.tabelogUrl?'<span class="iw-src" style="background:#e53935"><a href="'+esc(item.tabelogUrl)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">食べログ</a></span>':'')
@@ -671,7 +671,7 @@ function showInfo(item,marker){
   var color=SRC_COLOR[item.src]||'#999';
   var bgtStr=item.sbgt||(item.bgt_d?'夜 ¥'+Number(item.bgt_d).toLocaleString()+(item.bgt_l?' / 昼 ¥'+Number(item.bgt_l).toLocaleString():''):'');
   var key=getKey(item);
-  var _defaultGmUrl=item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:(item.lat&&item.lng)?'https://maps.google.com/?q='+item.lat+','+item.lng:'https://www.google.com/maps/search/'+encodeURIComponent(item.name);
+  var _defaultGmUrl=(item.lat&&item.lng)?'https://www.google.com/maps/place/'+encodeURIComponent(item.name)+'/@'+item.lat+','+item.lng+',17z':item.pid?'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(item.name)+'&query_place_id='+item.pid:'https://www.google.com/maps/search/'+encodeURIComponent(item.name);
   var gmUrl=(gmapLinks[key])||_defaultGmUrl;
   var existingMemo=memoData[key]||'';
   var nameHtml='<a href="'+esc(gmUrl)+'" target="_blank" rel="noopener">'+esc(item.name)+'</a>';
