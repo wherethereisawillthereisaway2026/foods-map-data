@@ -1081,9 +1081,15 @@ function initMap(){
     if(gb)gb.style.display='';if(eb)eb.style.display='';
   }
   loadMsrData(function(){loadFancrewData(function(){loadMoppyData(function(){loadMylistData(function(){loadFoodsData();});});});});
+  var _locMarker=null;
   document.getElementById('locate-btn').addEventListener('click',function(){
     if(!navigator.geolocation)return;
-    navigator.geolocation.getCurrentPosition(function(pos){map.setCenter({lat:pos.coords.latitude,lng:pos.coords.longitude});map.setZoom(14);});
+    navigator.geolocation.getCurrentPosition(function(pos){
+      var latlng={lat:pos.coords.latitude,lng:pos.coords.longitude};
+      map.setCenter(latlng);map.setZoom(14);
+      if(_locMarker)_locMarker.setMap(null);
+      _locMarker=new google.maps.Marker({position:latlng,map:map,title:'現在地',icon:{path:google.maps.SymbolPath.CIRCLE,fillColor:'#2979ff',fillOpacity:1,strokeColor:'#fff',strokeWeight:3,scale:10},zIndex:9999});
+    },function(){},{ enableHighAccuracy:true });
   });
 }
 function doSearch(){
