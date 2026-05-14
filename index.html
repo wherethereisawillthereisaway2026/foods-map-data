@@ -707,7 +707,7 @@ function showInfo(item,marker){
     +(bgtStr?'<div class="iw-row">💰 '+esc(bgtStr)+'</div>':'')
     +(dupTabelogBgt?'<div class="iw-row" style="color:#e53935">💰 食べログ '+esc(dupTabelogBgt)+'</div>':'')
     +(item.area?'<div class="iw-row">📍 '+esc(item.area)+'</div>':'')
-    +(function(){if(!item.closed)return '';var DAY_JA=['日','月','火','水','木','金','土'];var today=DAY_JA[new Date().getDay()];var isToday=item.closed.indexOf(today+'曜日')!==-1;return '<div class="iw-row" style="'+(isToday?'color:#e53935;font-weight:700':'color:#555')+'">🚫 定休日: '+esc(item.closed)+(isToday?' ← 本日定休':'')+'</div>';})()
+    +(function(){if(item.src!=='tabelog')return '';if(item.closed==='なし')return '<div class="iw-row" style="color:#888">🚫 定休日: なし</div>';if(!item.closed)return '<div class="iw-row" style="color:#aaa">🚫 定休日: 不明</div>';var DAY_JA=['日','月','火','水','木','金','土'];var today=DAY_JA[new Date().getDay()];var isToday=item.closed.indexOf(today+'曜日')!==-1;return '<div class="iw-row" style="'+(isToday?'color:#e53935;font-weight:700':'color:#555')+'">🚫 定休日: '+esc(item.closed)+(isToday?' ← 本日定休':'')+'</div>';})()
     +(isMaster&&existingMemo?'<div class="iw-memo-existing" onclick="openEditPanel(\''+esc(key)+'\')">📝 '+esc(existingMemo)+'</div>':'')
     +'<div class="iw-links">'
     +(isMaster?'<a class="iw-link" style="background:#607d8b" href="#" onclick="openEditPanel(\''+esc(key)+'\');return false">編集</a>':'')
