@@ -658,7 +658,7 @@ function showMylistInfo(item,marker){
     +(item.tabelogUrl?'<span class="iw-src" style="background:#e53935"><a href="'+esc(item.tabelogUrl)+'" target="_blank" rel="noopener" style="color:#fff;text-decoration:none">食べログ</a></span>':'')
     +'<div class="iw-name"><a href="'+esc(gmUrl)+'" target="_blank" rel="noopener">'+esc(item.name)+'</a></div>'
     +(item.tag?'<div class="iw-row">🏷 '+esc(item.tag)+'</div>':'')
-    +(item.memo?'<div class="iw-row" style="white-space:pre-wrap">📝 '+esc(item.memo)+'</div>':'')
+    +(item.memo?'<div class="iw-row" style="white-space:pre-wrap">📝 '+linkifyMemo(item.memo)+'</div>':'')
     +'<div class="iw-links">'
     +(isMaster?'<a class="iw-link" style="background:#1565c0" href="#" onclick="openMylistEdit(\''+esc(item.id)+'\');return false">編集</a>':'')
     +(isMaster?'<a class="iw-link iw-del-btn" id="ml-del-'+esc(item.id)+'" style="background:#e53935" href="#" onclick="confirmDeleteMylist(\''+esc(item.id)+'\',this);return false">削除</a>':'')
@@ -757,6 +757,7 @@ function saveEditPanel(key){
   var msg=document.getElementById('edit-saved-msg');if(msg){msg.style.display='inline';setTimeout(function(){msg.style.display='none';},2000);}
 }
 function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function linkifyMemo(s){return String(s||'').split(/(https?:\/\/[^\s]+)/).map(function(p,i){return i%2===1?'<a href="'+esc(p)+'" target="_blank" rel="noopener" style="color:#1565c0;word-break:break-all">'+esc(p)+'</a>':esc(p);}).join('');}
 function setStatus(t){document.getElementById('status-bar').textContent=t;}
 
 // ===== MYLIST =====
