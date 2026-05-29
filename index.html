@@ -259,7 +259,8 @@ var FERRY_MAP_URL = 'https://wherethereisawillthereisaway2026.github.io/car-ferr
 var FOODS_CDN       = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/data.json';
 var FOODS_CACHE_KEY = 'foods_v3';
 var MASTER_KEY = 'ag2026';  // マスターURL: ?m=ag2026
-var isMaster = (new URLSearchParams(location.search).get('m') === MASTER_KEY);
+(function(){ var m = new URLSearchParams(location.search).get('m'); if(m === MASTER_KEY) localStorage.setItem('masterKey', MASTER_KEY); })();
+var isMaster = (new URLSearchParams(location.search).get('m') === MASTER_KEY) || (localStorage.getItem('masterKey') === MASTER_KEY);
 (function(){var p=new URLSearchParams(window.location.search);if(p.get('lat')&&p.get('lng')){window._xLat=parseFloat(p.get('lat'));window._xLng=parseFloat(p.get('lng'));window._xZ=p.get('z')?parseInt(p.get('z')):12;}})();
 var FOODS_CACHE_TTL = 86400000;
 var SHOW_ZOOM       = 10;
@@ -1110,7 +1111,7 @@ function initMap(){
 function openMapLink(url){
   var c=map.getCenter();
   var params='?lat='+c.lat().toFixed(5)+'&lng='+c.lng().toFixed(5)+'&z='+map.getZoom();
-  var m=new URLSearchParams(location.search).get('m');
+  var m=new URLSearchParams(location.search).get('m')||localStorage.getItem('masterKey');
   if(m)params+='&m='+encodeURIComponent(m);
   window.location.href = url+params;
 }
