@@ -201,9 +201,10 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 
   </div>
   <div style="padding:6px 8px;border-top:1px solid #eee;display:flex;gap:4px;align-items:center;flex-shrink:0;background:#fff;">
-    <button onclick="openMapLink(SH_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">🚐車中泊</button>
+    <button onclick="openMapLink(SH_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">🚐車泊</button>
     <button onclick="openMapLink(FES_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">🏮祭り</button>
     <button style="flex:1;padding:7px;background:#1a73e8;color:#fff;border:1.5px solid #1a73e8;border-radius:4px;cursor:default;font-size:12px;font-weight:bold;">🍚飯</button>
+    <button onclick="openMapLink(FERRY_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">⚓フェリー</button>
   </div>
 </div>
 </div>
@@ -253,6 +254,7 @@ var MYLIST_GAS_URL = 'https://script.google.com/macros/s/AKfycbwFoq_EpDifhuNWMeV
 var MYLIST_CDN     = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/mylist_data.json';
 var SH_MAP_URL    = 'https://wherethereisawillthereisaway2026.github.io/shakuhachi-map-data/';
 var FES_MAP_URL   = 'https://wherethereisawillthereisaway2026.github.io/matsuri-map-data/';
+var FERRY_MAP_URL = 'https://wherethereisawillthereisaway2026.github.io/car-ferry-map/';
 
 var FOODS_CDN       = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/data.json';
 var FOODS_CACHE_KEY = 'foods_v3';
@@ -1110,7 +1112,7 @@ function openMapLink(url){
   var params='?lat='+c.lat().toFixed(5)+'&lng='+c.lng().toFixed(5)+'&z='+map.getZoom();
   var m=new URLSearchParams(location.search).get('m');
   if(m)params+='&m='+encodeURIComponent(m);
-  window.open(url+params,'_blank');
+  window.location.href = url+params;
 }
 function doSearch(){
   var kw=document.getElementById('search-inp').value.trim();if(!kw)return;
