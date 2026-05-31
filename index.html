@@ -118,11 +118,13 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
   <div id="budget-bar">
     <div class="blabel">💰 予算フィルター（全ソース横断）</div>
     <div id="budget-rows">
-      <div style="margin-bottom:3px">
-        <div class="frow" id="budget-dinner-row"></div>
+      <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+        <span style="font-size:11px;flex-shrink:0">🌙</span>
+        <div class="frow" id="budget-dinner-row" style="flex:1"></div>
       </div>
-      <div>
-        <div class="frow" id="budget-lunch-row"></div>
+      <div style="display:flex;align-items:center;gap:3px">
+        <span style="font-size:11px;flex-shrink:0">☀️</span>
+        <div class="frow" id="budget-lunch-row" style="flex:1"></div>
       </div>
     </div>
   </div>
