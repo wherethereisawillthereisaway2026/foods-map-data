@@ -19,7 +19,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 .tb-btn{background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:5px;padding:6px 8px;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
 .tb-btn:hover{background:rgba(255,255,255,.28)}
 
-#status-bar{padding:5px 10px;font-size:12px;color:#777;border-bottom:1px solid #f0f0f0;flex-shrink:0;min-height:24px}
+#status-bar{padding:5px 10px;font-size:12px;color:#777;border-top:1px solid #f0f0f0;flex-shrink:0;min-height:24px}
 #budget-bar{padding:5px 10px 6px;border-bottom:1px solid #f0f0f0;background:#fafafa}
 #budget-bar .blabel{font-size:11px;color:#999;margin-bottom:3px}
 #budget-bar .frow{gap:3px}
@@ -100,6 +100,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
   #collapse-btn{display:none!important}
 }
 @media(min-width:768px){.fgrid,.fgrid4{grid-template-columns:repeat(6,1fr);}}
+@media(max-width:600px),(orientation:portrait){#budget-rows{display:flex;gap:6px;}#budget-rows>div{flex:1;min-width:0;}}
 </style>
 </head>
 <body>
@@ -113,17 +114,18 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     <button class="tb-btn" id="select-all-btn" onclick="selectAll()" title="全選択／全解除" style="min-width:3em;text-align:center;">全選択</button>
     <button class="tb-btn" id="mobile-fold-btn" onclick="toggleSidebar()" style="min-width:3em;text-align:center;display:none;">▽</button>
   </div>
-  <div id="status-bar">読み込み中...</div>
   <div id="sb-scroll">
   <div id="budget-bar">
     <div class="blabel">💰 予算フィルター（全ソース横断）</div>
-    <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
-      <span style="font-size:11px;color:#888;flex-shrink:0">🌙夜</span>
-      <div class="frow" id="budget-dinner-row" style="flex:1"></div>
-    </div>
-    <div style="display:flex;align-items:center;gap:3px">
-      <span style="font-size:11px;color:#888;flex-shrink:0">☀️昼</span>
-      <div class="frow" id="budget-lunch-row" style="flex:1"></div>
+    <div id="budget-rows">
+      <div style="display:flex;align-items:center;gap:3px;margin-bottom:3px">
+        <span style="font-size:11px;color:#888;flex-shrink:0">🌙夜</span>
+        <div class="frow" id="budget-dinner-row" style="flex:1"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:3px">
+        <span style="font-size:11px;color:#888;flex-shrink:0">☀️昼</span>
+        <div class="frow" id="budget-lunch-row" style="flex:1"></div>
+      </div>
     </div>
   </div>
 
@@ -201,6 +203,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
     </div>
 
   </div>
+  <div id="status-bar">読み込み中...</div>
   <div style="padding:6px 8px;border-top:1px solid #eee;display:flex;gap:4px;align-items:center;flex-shrink:0;background:#fff;">
     <button onclick="openMapLink(SH_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">🚐車泊</button>
     <button onclick="openMapLink(FES_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">🏮祭り</button>
