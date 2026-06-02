@@ -1056,6 +1056,7 @@ function toggleMoppyList(){
 function initMap(){
   var _pos=(function(){try{return JSON.parse(localStorage.getItem('foods_pos')||'null');}catch(e){return null;}})();
   var _fromLink=typeof window._xLat!=='undefined';
+  if(_fromLink){var _mp=new URLSearchParams(location.search).get('m');history.replaceState(null,'',location.pathname+(_mp?'?m='+encodeURIComponent(_mp):''));}
   map=new google.maps.Map(document.getElementById('map'),{
     center:_fromLink?{lat:window._xLat,lng:window._xLng}:_pos?{lat:_pos.lat,lng:_pos.lng}:{lat:35.68,lng:139.69},
     zoom:_fromLink?window._xZ:_pos?_pos.z:11,
