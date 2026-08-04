@@ -269,12 +269,12 @@ var isMaster = (new URLSearchParams(location.search).get('m') === MASTER_KEY) ||
 var FOODS_CACHE_TTL = 86400000;
 var SHOW_ZOOM       = 10;
 
-var TABE_MAIN1  = ['寿司','天ぷら','焼肉','焼き鳥','ステーキ','うどん','そば','鳥料理','うなぎ','お好み焼き','すき焼き・しゃぶしゃぶ','とんかつ','居酒屋','立ち飲み','餃子','カレー','ラーメン','ハンバーガー','パン','ピザ','洋食','食堂'];
-var TABE_MAIN2  = ['フレンチ','イタリアン','スペイン料理','アジア・エスニック','中華料理','日本料理','創作料理・イノベーティブ'];
+var TABE_MAIN1  = ['寿司','天ぷら','焼肉','焼き鳥','ステーキ・鉄板焼き','うどん','そば','鳥料理','お好み焼き','すき焼き・しゃぶしゃぶ','とんかつ','居酒屋','立ち飲み','餃子','カレー','ラーメン','ハンバーガー','パン','ピザ','洋食','食堂','うなぎ'];
+var TABE_MAIN2  = ['フレンチ','イタリアン','スペイン料理','アジア・エスニック','中国料理','日本料理','創作料理・イノベーティブ'];
 var TABE_MAIN   = TABE_MAIN1.concat(TABE_MAIN2);
-var TABE_SWEETS = ['アイス・ジェラート','スイーツ','バー','和菓子','カフェ'];
+var TABE_SWEETS = ['アイス・ジェラート','スイーツ','バー','和菓子・甘味処','カフェ'];
 var TABELOG_CATS = TABE_MAIN.concat(TABE_SWEETS);
-var TABE_LABELS  = {'すき焼き・しゃぶしゃぶ':'すき・しゃぶ','アイス・ジェラート':'アイス','アジア・エスニック':'アジア系','創作料理・イノベーティブ':'イノベ'};
+var TABE_LABELS  = {'すき焼き・しゃぶしゃぶ':'すき・しゃぶ','アイス・ジェラート':'アイス','アジア・エスニック':'アジア系','創作料理・イノベーティブ':'イノベ','ステーキ・鉄板焼き':'ステーキ','和菓子・甘味処':'和菓子'};
 var GOEI_GENRES  = ['フレンチ','イタリアン','日本料理','寿司','イノベーティブ','中華','スペイン料理','天ぷら・とんかつ','アジア料理','その他洋食','居酒屋・焼鳥・焼肉','和菓子・スイーツ','カフェ・パン・バー','その他'];
 var MICH_AWARDS  = ['ミシュラン 三つ星','ミシュラン 二つ星','ミシュラン 一つ星','ビブグルマン'];
 var MICH_AWARD_L = {'ミシュラン 三つ星':'★★★','ミシュラン 二つ星':'★★','ミシュラン 一つ星':'★','ビブグルマン':'Bib'};
@@ -340,7 +340,7 @@ function loadMylistData(cb){
 
 var fState = {
   tabe:new Set(), goei:new Set(), mich_awards:new Set(), mich_budgets:new Set(),
-  budgets_d:new Set(), budgets_l:new Set(), tabe_min_score:0
+  budgets_d:new Set(), budgets_l:new Set(), tabe_min_score:0, tabe_parking_only:false
 };
 
 // ===== FILTERS =====
@@ -360,6 +360,14 @@ function buildFilters() {
     });
     sr.appendChild(b);
   });
+  var pb=mkBtn('駐車場','parking','#e53935',false);
+  pb.addEventListener('click',function(){
+    fState.tabe_parking_only=!fState.tabe_parking_only;
+    pb.classList.toggle('on',fState.tabe_parking_only);
+    pb.style.background=fState.tabe_parking_only?'#e53935':'';
+    _filterDirty=true;renderMarkers();
+  });
+  sr.appendChild(pb);
   var tg=document.getElementById('tabe-grid');
   TABE_MAIN1.forEach(function(cat){
     var b=mkBtn(TABE_LABELS[cat]||cat,cat,'#e53935',false); b.title=cat;
@@ -505,6 +513,7 @@ function shouldDisplay(item){
     var _tabeAward=item.award==='喫茶店'?'カフェ':item.award;
     if(fState.tabe.size===0||!fState.tabe.has(_tabeAward))return false;
     if(fState.tabe_min_score>0){var s=parseFloat(item.score);if(isNaN(s)||s<fState.tabe_min_score)return false;}
+    if(fState.tabe_parking_only&&!(item.parking&&item.parking.indexOf('有')===0))return false;
     return passBudgetFilter(item);
   }
   if(item.src==='goeimillau') return fState.goei.size>0 && fState.goei.has(item.genre) && passBudgetFilter(item);
@@ -731,6 +740,7 @@ function showInfo(item,marker){
     +(item.ikyu_id?'<a class="iw-link" style="background:#795548" href="https://restaurant.ikyu.com/'+item.ikyu_id+'" target="_blank" rel="noopener">一休</a>':'')
     +'</div>'
     +(item.src==='msr'&&item.url?'<div style="font-size:11px;color:#999;margin-top:4px">⚠ <a href="https://www2.ms-r.com/MSR/MonitorNew/index.asp" target="_blank" rel="noopener" style="color:#999">ms-r.com にログイン後</a>にクリックしてください</div>':'')
+    +(item.src==='tabelog'&&item.parking?'<div class="iw-row" style="color:#555">🅿️ 駐車場: '+esc(item.parking)+'</div>':'')
     +'</div>';
   infoWin.setContent(html);infoWin.open(map,marker);
 }
