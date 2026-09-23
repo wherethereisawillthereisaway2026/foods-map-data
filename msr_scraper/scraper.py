@@ -11,7 +11,7 @@ from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
-from playwright.sync_api import sync_playwright
+from patchright.sync_api import sync_playwright
 
 LOGON_URL   = "https://www2.ms-r.com/MSR/MonitorNew/logon.asp?EntryType="
 API_URL     = "https://www2.ms-r.com/MSRP/Monitor/Api/GetInvitationForSearch.php"
@@ -22,21 +22,22 @@ GSI_GEO_URL = "https://msearch.gsi.go.jp/address-search/AddressSearch"
 OUTPUT      = Path(__file__).parent.parent / "msr-data.json"
 SLEEP_REQ   = 0.5
 SLEEP_GEO   = 0.3
+CHROME_PROFILE_DIR = Path.home() / ".cache" / "msr_chrome_profile"
 
 
 def login() -> requests.Session:
     with sync_playwright() as p:
-        browser = p.chromium.launch(
-            headless=True,
-            args=["--disable-blink-features=AutomationControlled", "--no-sandbox"],
-        )
-        ctx = browser.new_context(
-            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        # headless=Trueだとms-r.com側のCloudflareボット判定を突破できないため、
+        # headful(要Xvfb。msr_run.shでxvfb-run経由起動)で実行する
+        ctx = p.chromium.launch_persistent_context(
+            str(CHROME_PROFILE_DIR),
+            headless=False,
             viewport={"width": 1280, "height": 800},
+            args=["--no-sandbox"],
+            locale="ja-JP",
+            timezone_id="Asia/Tokyo",
         )
         page = ctx.new_page()
-        # AutomationControlledフラグをJSで除去
-        page.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
         page.goto(LOGON_URL, wait_until="domcontentloaded", timeout=60000)
         time.sleep(3)  # Cloudflare JS challenge 完了待ち
         print(f"[login] URL={page.url} title={page.title()}", file=sys.stderr)
@@ -47,7 +48,7 @@ def login() -> requests.Session:
         page.get_by_role("button", name="モニターサイトへ ログイン").click()
         page.wait_for_url("**/MSRP/Monitor/**", timeout=30000)
         cookies = ctx.cookies()
-        browser.close()
+        ctx.close()
     s = requests.Session()
     s.headers.update(HEADERS)
     for c in cookies:
