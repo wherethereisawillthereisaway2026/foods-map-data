@@ -5,14 +5,15 @@ on:
   schedule:
     - cron: '30 18 * * *'  # 毎日JST 3時半（UTC 18:30）
 
+permissions:
+  contents: write
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
       - name: Run actions/checkout@v4
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GH_TOKEN }}
 
       - name: Setup Python
         uses: actions/setup-python@v5
