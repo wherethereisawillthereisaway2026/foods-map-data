@@ -204,7 +204,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 
   </div>
   <div id="status-bar">読み込み中...</div>
-  <div style="padding:6px 8px;border-top:1px solid #eee;display:flex;gap:4px;align-items:center;flex-shrink:0;background:#fff;">
+  <div id="map-nav" style="padding:6px 8px;border-top:1px solid #eee;display:flex;gap:4px;align-items:center;flex-shrink:0;background:#fff;">
     <button onclick="openMapLink(SH_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">🚐車泊</button>
     <button onclick="openMapLink(FES_MAP_URL)" style="flex:1;padding:7px;background:#fff;color:#1a73e8;border:1.5px solid #1a73e8;border-radius:4px;cursor:pointer;font-size:12px;font-weight:bold;">🏮祭り</button>
     <button style="flex:1;padding:7px;background:#1a73e8;color:#fff;border:1.5px solid #1a73e8;border-radius:4px;cursor:default;font-size:12px;font-weight:bold;">🍚飯</button>
@@ -267,6 +267,8 @@ var FOODS_CACHE_KEY = 'foods_v3';
 var MASTER_KEY = 'ag2026';  // マスターURL: ?m=ag2026
 (function(){ var m = new URLSearchParams(location.search).get('m'); if(m === MASTER_KEY) localStorage.setItem('masterKey', MASTER_KEY); })();
 var isMaster = (new URLSearchParams(location.search).get('m') === MASTER_KEY) || (localStorage.getItem('masterKey') === MASTER_KEY);
+var isShare = new URLSearchParams(location.search).get('share') === '1';  // 友人共有URL: ?share=1（他マップ遷移・更新・マイリストなし）
+if(isShare) isMaster = false;
 (function(){var p=new URLSearchParams(window.location.search);if(p.get('lat')&&p.get('lng')){window._xLat=parseFloat(p.get('lat'));window._xLng=parseFloat(p.get('lng'));window._xZ=p.get('z')?parseInt(p.get('z')):12;}})();
 var FOODS_CACHE_TTL = 86400000;
 var SHOW_ZOOM       = 10;
@@ -1107,6 +1109,7 @@ function initMap(){
   });
   try{localStorage.removeItem('foods_f');}catch(e){}
   if(!isMaster){var ms=document.getElementById('mylist-sec');if(ms)ms.style.display='none';}
+  if(isShare){['map-nav','update-btn','fc-update-btn'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});}
   loadMemo();loadGmapLinks();buildFilters();renderMylistItems();
   if(isMaster){
     var gb=document.getElementById('ml-geocode-btn'),eb=document.getElementById('ml-export-btn');
