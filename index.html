@@ -131,7 +131,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 
     <div class="sec">
       <div class="sec-hd">
-        <span class="sec-title"><span class="sec-dot" style="background:#e53935"></span>食べログ百名店</span>
+        <span class="sec-title"><span class="sec-dot" style="background:#e53935"></span>食べログ百名店<span style="font-size:10px;font-weight:400;color:#999;margin-left:6px">更新 2026-10-19</span></span>
         <button class="sec-all" onclick="srcAll('tabelog')">全選択</button>
       </div>
       <div class="frow" id="tabe-score-row" style="margin-bottom:6px"></div>
@@ -730,6 +730,7 @@ function showInfo(item,marker){
     +'<div class="iw-name">'+nameHtml+'</div>'
     +(item.award&&item.award!=='ガストロノミー'?'<div class="iw-row">🏆 '+esc(item.award)+'</div>':'')
     +(item.score?'<div class="iw-row">⭐ '+esc(item.score)+'</div>':'')
+    +(item.awd?item.awd.map(function(a){return '<div class="iw-row" style="color:#555;font-size:11px">'+esc(a)+'</div>';}).join(''):'')
     +(item.genre&&item.src!=='tabelog'?'<div class="iw-row">🍽 '+esc(item.genre)+'</div>':'')
     +dupExtra
     +(bgtStr?'<div class="iw-row">💰 '+esc(bgtStr)+'</div>':'')
