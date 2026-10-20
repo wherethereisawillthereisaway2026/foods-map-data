@@ -25,6 +25,43 @@ SLEEP_GEO   = 0.3
 CHROME_PROFILE_DIR = Path.home() / ".cache" / "msr_chrome_profile"
 
 
+def wait_otp_mail(sent_at: datetime, timeout_sec: int = 300) -> str:
+    """MSRのワンタイムパスワードメールを待って6桁を返す。
+    メインGmailから OTP_IMAP_USER の受信箱へ転送フィルタで届く前提（認証情報は環境変数）"""
+    import email, imaplib
+    from email.utils import parsedate_to_datetime
+    deadline = time.time() + timeout_sec
+    while time.time() < deadline:
+        with imaplib.IMAP4_SSL("imap.gmail.com") as m:
+            m.login(os.environ["OTP_IMAP_USER"], os.environ["OTP_IMAP_PASSWORD"])
+            m.select("INBOX")
+            _, ids = m.search(None, f'(FROM "noreply@ms-r.com" SINCE {sent_at:%d-%b-%Y})')
+            for i in reversed(ids[0].split()):
+                _, data = m.fetch(i, "(RFC822)")
+                msg = email.message_from_bytes(data[0][1])
+                if parsedate_to_datetime(msg["Date"]) < sent_at - timedelta(seconds=60):
+                    continue
+                part = next((p for p in msg.walk() if p.get_content_type() == "text/plain"), msg)
+                body = part.get_payload(decode=True).decode(part.get_content_charset() or "utf-8", "replace")
+                hit = re.search(r"ワンタイムパスワード[：:]\s*(\d{6})", body)
+                if hit:
+                    return hit.group(1)
+        time.sleep(10)
+    raise TimeoutError(f"MSRのワンタイムパスワードメールが{timeout_sec}秒届かない（転送フィルタを確認）")
+
+
+def pass_two_step_auth(page):
+    """2段階認証画面: 送信→メールのコード入力→信頼できるブラウザに登録して認証"""
+    print("[login] 2段階認証を求められた", file=sys.stderr)
+    sent_at = datetime.now(timezone.utc)
+    page.click("#sendOTPbtn")
+    page.wait_for_selector("#OneTimePassword", timeout=30000)
+    code = wait_otp_mail(sent_at)
+    page.fill("#OneTimePassword", code)
+    page.check("#saveBrowser")
+    page.click("#confirmOTPbtn")
+
+
 def login() -> requests.Session:
     with sync_playwright() as p:
         # headless=Trueだとms-r.com側のCloudflareボット判定を突破できないため、
@@ -46,6 +83,9 @@ def login() -> requests.Session:
         page.fill('input[name="LogonID"]', LOGIN_ID)
         page.fill('#Password', LOGIN_PW)
         page.get_by_role("button", name="モニターサイトへ ログイン").click()
+        page.wait_for_url(re.compile(r"/MSRP/Monitor/|TwoStepAuth"), timeout=30000)
+        if "TwoStepAuth" in page.url:
+            pass_two_step_auth(page)
         page.wait_for_url("**/MSRP/Monitor/**", timeout=30000)
         cookies = ctx.cookies()
         ctx.close()
