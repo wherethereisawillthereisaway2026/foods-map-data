@@ -52,15 +52,6 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 .iw-links{display:flex;gap:5px;margin-top:8px}
 .iw-link{flex:1;display:block;text-align:center;padding:6px 4px;border-radius:5px;color:#fff;text-decoration:none;font-size:11px;font-weight:600}
 
-#update-btn,#fc-update-btn{font-size:14px;background:rgba(255,255,255,.15);color:#fff;border:none;border-radius:5px;padding:4px 7px;cursor:pointer;flex-shrink:0}
-#update-btn:hover,#fc-update-btn:hover{background:rgba(255,255,255,.28)}
-#update-btn.confirm,#fc-update-btn.confirm{background:#e53935}
-#update-btn:disabled,#fc-update-btn:disabled{opacity:.4;cursor:default}
-.progress-area{padding:4px 8px 6px;border-top:1px solid #f0f0f0}
-.progress-bar-wrap{background:#e0e0e0;border-radius:3px;height:4px;margin:4px 0}
-.progress-bar-fill{background:#00b0a0;height:4px;border-radius:3px;transition:width .4s}
-.fc-bar-fill{background:#ff6f00}
-.step-list{list-style:none;font-size:10px;color:#777;margin-top:3px;padding:0}
 
 .iw-name a{color:inherit;text-decoration:none}
 .iw-name a:hover{text-decoration:underline}
@@ -172,12 +163,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#ff6f00"></span>Fancrew</span>
         <span id="fancrew-count" style="font-size:11px;color:#aaa;flex:1;text-align:center"></span>
-        <button id="fc-update-btn" class="tb-btn" style="font-size:16px;padding:4px 7px" onclick="handleFancrewUpdateClick(this)" title="Fancrewデータ更新">🔄</button>
         <button id="fancrew-pin-btn" class="sec-all" onclick="toggleFancrewPin()" title="ピン表示" style="margin-left:3px;font-size:13px;padding:2px 8px">📍</button>
-      </div>
-      <div id="fc-progress-wrap" class="progress-area" style="display:none">
-        <div class="progress-bar-wrap"><div id="fc-progress-bar" class="progress-bar-fill fc-bar-fill" style="width:0%"></div></div>
-        <ul id="fc-step-list" class="step-list"></ul>
       </div>
     </div>
 
@@ -193,12 +179,7 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
       <div class="sec-hd">
         <span class="sec-title"><span class="sec-dot" style="background:#00b0a0"></span>Moppy</span>
         <span id="moppy-count" style="font-size:11px;color:#aaa;flex:1;text-align:center"></span>
-        <button id="update-btn" class="tb-btn" style="font-size:16px;padding:4px 7px" onclick="handleUpdateClick(this)" title="Moppyデータ更新">🔄</button>
         <button id="moppy-pin-btn" class="sec-all" onclick="toggleMoppyPin()" title="ピン表示" style="margin-left:3px;font-size:13px;padding:2px 8px">📍</button>
-      </div>
-      <div id="progress-wrap" class="progress-area" style="display:none">
-        <div class="progress-bar-wrap"><div id="progress-bar" class="progress-bar-fill" style="width:0%"></div></div>
-        <ul id="step-list" class="step-list"></ul>
       </div>
     </div>
 
@@ -247,10 +228,6 @@ body{font-family:'Hiragino Sans',sans-serif;height:100vh;display:flex;overflow:h
 
 <script>
 var API_KEY  = 'AIzaSyAMBPa_T_URVyJNn1lHnXjzDiEZoKPNPSw';
-var _t = ['gho_lFBnN9dg4yQEo00', 'QVKRnQVzoS8BNYY2ITSmL'];
-var GH_TOKEN = _t[0]+_t[1];
-var GH_REPO         = 'wherethereisawillthereisaway2026/moppy-scraper';
-var FANCREW_GH_REPO = 'wherethereisawillthereisaway2026/foods-map-data';
 var MOPPY_DATA_URL   = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/moppy-data.json';
 var FANCREW_DATA_URL = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/fancrew-data.json';
 var MSR_DATA_URL     = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/msr-data.json';
@@ -1110,7 +1087,7 @@ function initMap(){
   });
   try{localStorage.removeItem('foods_f');}catch(e){}
   if(!isMaster){var ms=document.getElementById('mylist-sec');if(ms)ms.style.display='none';}
-  if(isShare){['map-nav','update-btn','fc-update-btn'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});}
+  if(isShare){['map-nav'].forEach(function(id){var e=document.getElementById(id);if(e)e.style.display='none';});}
   loadMemo();loadGmapLinks();buildFilters();renderMylistItems();
   if(isMaster){
     var gb=document.getElementById('ml-geocode-btn'),eb=document.getElementById('ml-export-btn');
@@ -1213,99 +1190,6 @@ function toggleSidebar(){
   });
 })();
 
-// ===== MOPPY UPDATE =====
-var FC_STEP_NAMES=['Set up job','Run actions/checkout@v4','Setup Python','Install dependencies','Run scraper','Commit fancrew-data.json'];
-var _fcConfPending=false,_fcConfTimer=null,fcPollTimer=null,fcCurrentRunId=null;
-function handleFancrewUpdateClick(btn){
-  if(btn.disabled)return;
-  if(_fcConfPending){clearTimeout(_fcConfTimer);_fcConfPending=false;btn.classList.remove('confirm');triggerFancrewScrape();}
-  else{_fcConfPending=true;btn.classList.add('confirm');btn.title='もう1回で実行';_fcConfTimer=setTimeout(function(){_fcConfPending=false;btn.classList.remove('confirm');btn.title='';},4000);}
-}
-function triggerFancrewScrape(){
-  var btn=document.getElementById('fc-update-btn');btn.disabled=true;
-  fetch('https://api.github.com/repos/'+FANCREW_GH_REPO+'/actions/workflows/fancrew-scrape.yml/dispatches',{method:'POST',headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({ref:'main'})})
-    .then(function(r){if(r.status===204)startFancrewProgress();else{btn.disabled=false;setStatus('トリガー失敗('+r.status+')');} })
-    .catch(function(){btn.disabled=false;setStatus('通信エラー');});
-}
-function startFancrewProgress(){
-  document.getElementById('fc-progress-wrap').style.display='block';
-  document.getElementById('fc-progress-bar').style.width='0%';
-  var startTime=Date.now(),attempts=0;fcCurrentRunId=null;
-  var ft=setInterval(function(){
-    attempts++;
-    fetch('https://api.github.com/repos/'+FANCREW_GH_REPO+'/actions/runs?event=workflow_dispatch&per_page=5',{headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json'}})
-      .then(function(r){return r.json();}).then(function(d){
-        var runs=d.workflow_runs||[];
-        for(var i=0;i<runs.length;i++){if(new Date(runs[i].created_at).getTime()>=startTime-8000){fcCurrentRunId=runs[i].id;clearInterval(ft);fcPollTimer=setInterval(pollFancrewSteps,8000);pollFancrewSteps();return;}}
-        if(attempts>6)clearInterval(ft);
-      }).catch(function(){});
-  },5000);
-}
-function pollFancrewSteps(){
-  if(!fcCurrentRunId)return;
-  fetch('https://api.github.com/repos/'+FANCREW_GH_REPO+'/actions/runs/'+fcCurrentRunId+'/jobs',{headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json'}})
-    .then(function(r){return r.json();}).then(function(d){
-      var job=(d.jobs||[])[0];if(!job)return;
-      var steps=(job.steps||[]).filter(function(s){return FC_STEP_NAMES.indexOf(s.name)!==-1;});
-      var done=steps.filter(function(s){return s.status==='completed';}).length;
-      document.getElementById('fc-progress-bar').style.width=Math.round(done/FC_STEP_NAMES.length*100)+'%';
-      var ul=document.getElementById('fc-step-list');ul.innerHTML='';
-      steps.forEach(function(s){var li=document.createElement('li');li.textContent=(s.status==='completed'?'✓ ':s.status==='in_progress'?'⟳ ':'· ')+s.name;ul.appendChild(li);});
-      if(job.status==='completed'){
-        clearInterval(fcPollTimer);
-        document.getElementById('fc-progress-wrap').style.display='none';
-        document.getElementById('fc-update-btn').disabled=false;
-        if(job.conclusion==='success'){setStatus('Fancrew更新完了 — 3秒後に再読み込み');setTimeout(function(){location.reload();},3000);}
-        else{loadFancrewData(function(){allData=mergeData(allData.filter(function(d){return d.src!=='fancrew';}));rebuildDataIndex();renderMarkers();});setStatus('Fancrew更新失敗');}
-      }
-    }).catch(function(){});
-}
-var STEP_NAMES=['Set up job','Run actions/checkout@v4','Checkout GAS project','Checkout foods-map-data','Setup Python','Install dependencies','Setup clasp','Run scraper','Commit GAS data','Commit moppy-data.json to foods-map-data','Deploy to GAS'];
-var _confPending=false,_confTimer=null,pollTimer=null,currentRunId=null;
-function handleUpdateClick(btn){
-  if(btn.disabled)return;
-  if(_confPending){clearTimeout(_confTimer);_confPending=false;btn.classList.remove('confirm');triggerScrape();}
-  else{_confPending=true;btn.classList.add('confirm');btn.title='もう1回で実行';_confTimer=setTimeout(function(){_confPending=false;btn.classList.remove('confirm');btn.title='';},4000);}
-}
-function triggerScrape(){
-  var btn=document.getElementById('update-btn');btn.disabled=true;
-  fetch('https://api.github.com/repos/'+GH_REPO+'/actions/workflows/scrape.yml/dispatches',{method:'POST',headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json','Content-Type':'application/json'},body:JSON.stringify({ref:'main'})})
-    .then(function(r){if(r.status===204)startProgress();else{btn.disabled=false;setStatus('トリガー失敗('+r.status+')');} })
-    .catch(function(){btn.disabled=false;setStatus('通信エラー');});
-}
-function startProgress(){
-  document.getElementById('progress-wrap').style.display='block';
-  document.getElementById('progress-bar').style.width='0%';
-  var startTime=Date.now(),attempts=0;currentRunId=null;
-  var ft=setInterval(function(){
-    attempts++;
-    fetch('https://api.github.com/repos/'+GH_REPO+'/actions/runs?event=workflow_dispatch&per_page=5',{headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json'}})
-      .then(function(r){return r.json();}).then(function(d){
-        var runs=d.workflow_runs||[];
-        for(var i=0;i<runs.length;i++){if(new Date(runs[i].created_at).getTime()>=startTime-8000){currentRunId=runs[i].id;clearInterval(ft);pollTimer=setInterval(pollSteps,8000);pollSteps();return;}}
-        if(attempts>6)clearInterval(ft);
-      }).catch(function(){});
-  },5000);
-}
-function pollSteps(){
-  if(!currentRunId)return;
-  fetch('https://api.github.com/repos/'+GH_REPO+'/actions/runs/'+currentRunId+'/jobs',{headers:{'Authorization':'Bearer '+GH_TOKEN,'Accept':'application/vnd.github+json'}})
-    .then(function(r){return r.json();}).then(function(d){
-      var job=(d.jobs||[])[0];if(!job)return;
-      var steps=(job.steps||[]).filter(function(s){return STEP_NAMES.indexOf(s.name)!==-1;});
-      var done=steps.filter(function(s){return s.status==='completed';}).length;
-      document.getElementById('progress-bar').style.width=Math.round(done/STEP_NAMES.length*100)+'%';
-      var ul=document.getElementById('step-list');ul.innerHTML='';
-      steps.forEach(function(s){var li=document.createElement('li');li.textContent=(s.status==='completed'?'✓ ':s.status==='in_progress'?'⟳ ':'· ')+s.name;ul.appendChild(li);});
-      if(job.status==='completed'){
-        clearInterval(pollTimer);
-        document.getElementById('progress-wrap').style.display='none';
-        document.getElementById('update-btn').disabled=false;
-        if(job.conclusion==='success'){setStatus('Moppy更新完了 — 3秒後に再読み込み');setTimeout(function(){location.reload();},3000);}
-        else{loadMoppyData(function(){allData=mergeData(allData.filter(function(d){return d.src!=='moppy';}));rebuildDataIndex();renderMarkers();});setStatus('Moppy更新失敗');}
-      }
-    }).catch(function(){});
-}
 </script>
 <script async src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAMBPa_T_URVyJNn1lHnXjzDiEZoKPNPSw&libraries=places&callback=initMap&language=ja"></script>
 </body>
