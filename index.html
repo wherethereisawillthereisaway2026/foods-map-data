@@ -302,8 +302,8 @@ var _mlFromSheet=false,_mlSyncing=false,_mlSyncAgain=false;
 function mlPendingCount(){var c=getLocalChanges();return (c.added||[]).length+Object.keys(c.edited||{}).length+(c.deleted||[]).length;}
 function mlShowSync(msg){
   var el=document.getElementById('ml-sync-status');
-  if(!el){var host=document.getElementById('mylist-items');if(!host||!host.parentNode)return;
-    el=document.createElement('div');el.id='ml-sync-status';el.style.cssText='font-size:10px;color:#c62828;padding:2px 4px';host.parentNode.insertBefore(el,host);}
+  if(!el){var host=document.getElementById('mylist-sec');if(!host)return;
+    el=document.createElement('div');el.id='ml-sync-status';el.style.cssText='font-size:10px;color:#c62828;padding:2px 4px';host.appendChild(el);}
   el.textContent=msg||'';el.style.display=msg?'':'none';
 }
 function syncMylist(){
