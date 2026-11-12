@@ -231,7 +231,6 @@ var API_KEY  = 'AIzaSyAMBPa_T_URVyJNn1lHnXjzDiEZoKPNPSw';
 var MOPPY_DATA_URL   = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/moppy-data.json';
 var FANCREW_DATA_URL = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/fancrew-data.json';
 var MSR_DATA_URL     = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/msr-data.json';
-var FOODS_GAS_URL  = 'https://script.google.com/macros/s/AKfycbzFhfWjjQripKM0_--JQpT1QRjy6Os6D4z4ukXqcnl8YU58Xb9PUOxvdXfaT0IHr8v1IQ/exec';
 var MYLIST_GAS_URL = 'https://script.google.com/macros/s/AKfycbwFoq_EpDifhuNWMeVVCr449LymrYdocIjGgAIQbprj4ypUafETB9T_vRwFQwfgYI-9gw/exec';
 var MYLIST_CDN     = 'https://raw.githubusercontent.com/wherethereisawillthereisaway2026/foods-map-data/main/mylist_data.json';
 var SH_MAP_URL    = 'https://wherethereisawillthereisaway2026.github.io/shakuhachi-map-data/';
@@ -296,20 +295,67 @@ function getLocalChanges(){try{return JSON.parse(localStorage.getItem('foods_myl
 function saveLocalChanges(c){try{localStorage.setItem('foods_mylist_changes',JSON.stringify(c));}catch(e){}}
 function loadMemo(){try{memoData=JSON.parse(localStorage.getItem('foods_memo')||'{}');}catch(e){memoData={};}}
 
+// ----- マイリスト同期 -----
+// 追加・編集・削除はまず端末(localStorage の foods_mylist_changes)に入れ、まとめてシートへ送る。
+// 送れたら端末の控えから消す。送れなかった分は残り、次の保存時・次の読み込み時にまた送る。
+var _mlFromSheet=false,_mlSyncing=false,_mlSyncAgain=false;
+function mlPendingCount(){var c=getLocalChanges();return (c.added||[]).length+Object.keys(c.edited||{}).length+(c.deleted||[]).length;}
+function mlShowSync(msg){
+  var el=document.getElementById('ml-sync-status');
+  if(!el){var host=document.getElementById('mylist-items');if(!host||!host.parentNode)return;
+    el=document.createElement('div');el.id='ml-sync-status';el.style.cssText='font-size:10px;color:#c62828;padding:2px 4px';host.parentNode.insertBefore(el,host);}
+  el.textContent=msg||'';el.style.display=msg?'':'none';
+}
+function syncMylist(){
+  if(!isMaster||isShare)return;
+  if(_mlSyncing){_mlSyncAgain=true;return;}
+  var c=getLocalChanges();
+  var sent={added:(c.added||[]).slice(),edited:JSON.parse(JSON.stringify(c.edited||{})),deleted:(c.deleted||[]).slice()};
+  var n=sent.added.length+Object.keys(sent.edited).length+sent.deleted.length;
+  if(!n){mlShowSync('');return;}
+  _mlSyncing=true;
+  fetch(MYLIST_GAS_URL,{method:'POST',body:JSON.stringify({action:'syncMylist',added:sent.added,edited:sent.edited,deleted:sent.deleted})})
+    .then(function(r){return r.json();})
+    .then(function(res){
+      if(!res||!res.ok)throw new Error((res&&res.error)||'failed');
+      // 送った分だけ控えから消す（送信中に増えた分・変わった分は残す）
+      var cur=getLocalChanges();
+      var sentAdd={};sent.added.forEach(function(m){sentAdd[m.id]=JSON.stringify(m);});
+      cur.added=(cur.added||[]).filter(function(m){return sentAdd[m.id]!==JSON.stringify(m);});
+      Object.keys(sent.edited).forEach(function(id){if(cur.edited&&JSON.stringify(cur.edited[id])===JSON.stringify(sent.edited[id]))delete cur.edited[id];});
+      cur.deleted=(cur.deleted||[]).filter(function(id){return sent.deleted.indexOf(id)===-1;});
+      saveLocalChanges(cur);
+      _mlSyncing=false;
+      mlShowSync('');
+      if(_mlSyncAgain||mlPendingCount()){_mlSyncAgain=false;syncMylist();}
+    })
+    .catch(function(e){
+      _mlSyncing=false;_mlSyncAgain=false;
+      mlShowSync('⚠ 未同期 '+mlPendingCount()+'件（この端末にだけ保存されています。シートに送れませんでした）');
+    });
+}
+
 function loadMylistData(cb){
   var c=getLocalChanges();
   var localAdded=c.added||[];
   var localEdited=c.edited||{};
   var localDeleted=new Set(c.deleted||[]);
   function applyEdited(m){var ov=localEdited[m.id];return ov?Object.assign({},m,ov):m;}
-  fetch(MYLIST_CDN+'?t='+Date.now())
+  // まずシート(GAS)から最新を読む。5秒で読めなければ GitHub の mylist_data.json を使う
+  var ac=(typeof AbortController!=='undefined')?new AbortController():null;
+  var tm=setTimeout(function(){if(ac)ac.abort();},5000);
+  fetch(MYLIST_GAS_URL+'?action=getJson',ac?{signal:ac.signal}:{})
     .then(function(r){return r.json();})
+    .then(function(j){clearTimeout(tm);if(!j||!j.ok||!j.rows)throw new Error('gas');_mlFromSheet=true;return j.rows;})
+    .catch(function(){clearTimeout(tm);return fetch(MYLIST_CDN+'?t='+Date.now()).then(function(r){return r.json();});})
     .then(function(data){
       mylistData=data
         .filter(function(m){return !localDeleted.has(m.id);})
         .map(applyEdited);
-      localAdded.forEach(function(m){if(!localDeleted.has(m.id))mylistData.push(applyEdited(m));});
+      var have={};mylistData.forEach(function(m){have[m.id]=true;});
+      localAdded.forEach(function(m){if(!localDeleted.has(m.id)&&!have[m.id])mylistData.push(applyEdited(m));});
       cb();
+      syncMylist();
     })
     .catch(function(){
       mylistData=localAdded
@@ -820,14 +866,6 @@ function geocodeMylist(){
     }
   });
 }
-function mlGasPost(payload){
-  var fid='gf_'+Date.now();
-  var ifr=document.createElement('iframe');ifr.name=fid;ifr.style.display='none';document.body.appendChild(ifr);
-  var frm=document.createElement('form');frm.action=MYLIST_GAS_URL;frm.method='POST';frm.target=fid;frm.style.display='none';
-  var inp=document.createElement('input');inp.type='hidden';inp.name='payload';inp.value=JSON.stringify(payload);
-  frm.appendChild(inp);document.body.appendChild(frm);frm.submit();
-  setTimeout(function(){if(frm.parentNode)frm.parentNode.removeChild(frm);if(ifr.parentNode)ifr.parentNode.removeChild(ifr);},3000);
-}
 function saveMylistItem(){
   var name=document.getElementById('ml-name').value.trim();
   if(!name){document.getElementById('ml-name').focus();return;}
@@ -846,7 +884,7 @@ function saveMylistItem(){
     c.edited=c.edited||{};
     c.edited[_editingId]=Object.assign(c.edited[_editingId]||{},editData);
     saveLocalChanges(c);
-    mlGasPost({action:'editMylist',id:_editingId,name:name,memo:memo,tag:tag,lat:_mlLat||'',lng:_mlLng||''});
+    syncMylist();
     var mk=markerPool.get('mylist|'+_editingId);if(mk)mk._item=item;
     renderMylistItems();closeMylistModal();
     return;
@@ -861,7 +899,7 @@ function saveMylistItem(){
   saveLocalChanges(c);
   mylistData.push(item);
   allData.push(item);
-  mlGasPost({action:'addMylist',id:id,name:name,memo:memo,tag:tag,lat:_mlLat,lng:_mlLng,url:''});
+  syncMylist();
   renderMylistItems();rebuildDataIndex();renderMarkers();
   closeMylistModal();
 }
@@ -896,7 +934,7 @@ function deleteMylistItem(id){
   allData=allData.filter(function(d){return!(d.src==='mylist'&&d.id===id);});
   var key='mylist|'+id;
   var m=markerPool.get(key);if(m)m.setMap(null);markerPool.delete(key);
-  mlGasPost({action:'deleteMylist',id:id});
+  syncMylist();
   renderMylistItems();rebuildDataIndex();
 }
 function renderMylistItems(){
@@ -937,7 +975,8 @@ function geocodeAllMylist(){
       var c=getLocalChanges();c.edited=c.edited||{};
       mylistData.forEach(function(m){if(m.lat&&m.lng){var ex=c.edited[m.id]||{};c.edited[m.id]=Object.assign(ex,{lat:m.lat,lng:m.lng,pid:m.pid||''});}});
       saveLocalChanges(c);
-      setStatus('ジオコード完了: OK='+done+' MISS='+miss+'/'+total+' — JSONをダウンロードしてcommitしてください');
+      syncMylist();
+      setStatus('ジオコード完了: OK='+done+' MISS='+miss+'/'+total);
       renderMylistItems();rebuildDataIndex();renderMarkers();
       return;
     }
